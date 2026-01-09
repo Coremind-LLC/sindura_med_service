@@ -9,11 +9,10 @@ from helpers.validator_helper import ValidatorHelper
 class User(AbstractUser):
     username = None
     phone = models.CharField(max_length=8, validators=[ValidatorHelper.validate_phone])
-    email = models.EmailField()
+    email = models.EmailField(unique=True)
     status = models.CharField(Status.choices, default=Status.ACTIVE)
 
     objects = UserManager()
-    is_primary = models.BooleanField(blank=True, default=False)
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["phone", "first_name", "last_name"]
 

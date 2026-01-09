@@ -1,0 +1,44 @@
+name: Deploy to Prod Server
+
+on:
+  push:
+    branches:
+      - prod
+
+jobs:
+  deploy:
+    name: Deploy to Prod (Self-hosted)
+    runs-on: [self-hosted, prod-runner]
+    environment: prod
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Pull latest code into the server project directory
+        run: |
+          cd /var/www/sindura_med_service
+          if [ -d ".git" ]; then
+            git fetch origin prod
+            git reset --hard origin/prod
+          else
+            git clone git@github.com:Coremind-LLC/sindura_med_service.git /var/www/sindura_med_service
+            cd /var/www/sindura_med_service
+            git checkout prod
+          fi
+
+      - name: Set up Docker and install dependencies
+        run: |
+          cd /var/www/sindura_med_service
+          docker compose --version
+          docker compose build --no-cache
+          docker compose up -d
+
+      - name: Run Django migrations and collectstatic
+        run: |
+          cd /var/www/sindura_med_service
+          docker compose exec -T web python manage.py migrate --noinput
+          docker compose exec -T web python manage.py collectstatic --noinput
+      - name: Clean up unused Docker resources
+        run: |
+          docker system prune -af --volumes
