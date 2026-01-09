@@ -8,6 +8,7 @@ from apps.user.services import UserService
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
+        fields = "__all__"
         extra_kwargs = {"password": {"write_only": True, "required": False}}
 
     def create(self, validated_data):
@@ -41,7 +42,6 @@ class UserSerializer(serializers.ModelSerializer):
             "is_active",
             "is_superuser",
             "is_staff",
-            "is_primary",
         }
 
         for field in allowed_fields:

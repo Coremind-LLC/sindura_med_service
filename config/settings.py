@@ -20,12 +20,12 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
-    "rest_framework.authtoken",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "drf_yasg",
+    "rest_framework.authtoken",
     "apps.examination",
     "apps.doctor",
     "apps.order",
@@ -130,8 +130,7 @@ SWAGGER_SETTINGS = {
             "in": "header",
             "name": "Authorization",
             "description": "Token-based authentication. Example: Token abc123",
-        },
-        "TenantHeader": {"type": "apiKey", "in": "header"},
+        }
     }
 }
 
