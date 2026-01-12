@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "drf_yasg",
+    "rest_framework",
     "rest_framework.authtoken",
     "apps.examination",
     "apps.doctor",
@@ -115,7 +116,7 @@ REST_FRAMEWORK = {
     "COERCE_DECIMAL_TO_STRING": False,
     "DEFAULT_RENDERER_CLASSES": (
         "djangorestframework_camel_case.render.CamelCaseJSONRenderer",
-        "djangorestframework_camel_case.render.CamelCaseBrowsableAPIRenderer",
+        # "djangorestframework_camel_case.render.CamelCaseBrowsableAPIRenderer",
     ),
     "DEFAULT_PARSER_CLASSES": (
         "djangorestframework_camel_case.parser.CamelCaseFormParser",
