@@ -12,7 +12,7 @@ class Examination(BaseModel):
     doctor = models.ForeignKey(
         Doctor, on_delete=models.PROTECT, null=True, blank=True
     )
-    is_lock = models.BooleanField(null=True, blank=True)
+    is_lock = models.BooleanField(null=True, blank=True, default=False)
 
     class Meta:
         db_table = "examination"
