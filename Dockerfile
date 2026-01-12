@@ -10,6 +10,8 @@ RUN apt-get update \
     gnupg \
     dirmngr \
     curl \
+    build-essential \
+    libpq-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -17,7 +19,7 @@ COPY requirements.txt /app/
 
 RUN python3 -m venv /venv
 RUN /venv/bin/pip install --upgrade pip
-RUN /venv/bin/pip install -r /app/requirements.txt
+RUN /venv/bin/pip install --no-cache-dir -r /app/requirements.txt
 
 ENV PATH="/venv/bin:$PATH"
 
