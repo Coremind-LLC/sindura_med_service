@@ -17,6 +17,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
