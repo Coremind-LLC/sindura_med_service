@@ -4,15 +4,11 @@ from rest_framework.response import Response
 
 from apps.common.views import BaseViewSet
 from apps.examination.models import Examination
-from apps.examination.serializers import ExaminationSerializer, ExaminationCreateUpdateSerializer
+from apps.examination.serializers import ExaminationSerializer
 
 class ExaminationViewSet(BaseViewSet):
     queryset = Examination.objects.all()
-
-    def get_serializer_class(self):
-        if self.action == "create":
-            return ExaminationCreateUpdateSerializer
-        return ExaminationSerializer
+    serializer_class = ExaminationSerializer
 
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:
