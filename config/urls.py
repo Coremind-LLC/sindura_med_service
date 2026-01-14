@@ -11,6 +11,7 @@ from drf_yasg.views import get_schema_view
 from apps.auth.views import AuthViewSet
 from apps.doctor.views import DoctorViewSet
 from apps.examination.views import ExaminationViewSet
+from apps.examination_pack.views import ExaminationPackViewSet
 from apps.examination_type.views import ExaminationTypeViewSet
 from apps.file.views import FileViewSet
 from apps.order.views import OrderViewSet
@@ -31,6 +32,7 @@ router = DefaultRouter()
 router.register(r"users", UserViewSet)
 router.register(r"doctors", DoctorViewSet)
 router.register(r"examinations", ExaminationViewSet)
+router.register(r"examination-packs", ExaminationPackViewSet)
 router.register(r"examination-types", ExaminationTypeViewSet)
 router.register(r"orders", OrderViewSet)
 router.register(r"files", FileViewSet, basename="file")
