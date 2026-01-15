@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "apps.examination_type",
     "apps.auth",
     "apps.user",
+    "apps.invoice",
     "apps.third_party.call_pro",
     "apps.third_party.qpay",
 ]

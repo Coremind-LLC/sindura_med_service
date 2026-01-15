@@ -9,12 +9,19 @@ from apps.examination_pack.models import ExaminationPack
 from apps.examination_type.models import ExaminationType
 
 class ExaminationPackSerializer(serializers.ModelSerializer):
+    dates = serializers.ListField(
+        child=serializers.DateField(),
+        required=True
+    )
+    start_time = serializers.TimeField(required=True)
+    end_time = serializers.TimeField(required=True)
     doctor = serializers.PrimaryKeyRelatedField(
         queryset=Doctor.objects.all(), required=True
     )
     examination_type = serializers.PrimaryKeyRelatedField(
         queryset=ExaminationType.objects.all(), required=True
     )
+    period = serializers.IntegerField(required=True)
     doctor_first_name = serializers.CharField(source="doctor.first_name", read_only=True)
     doctor_last_name = serializers.CharField(source="doctor.last_name", read_only=True)
     doctor_position = serializers.CharField(source="doctor.position", read_only=True)
