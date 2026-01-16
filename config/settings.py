@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.auth",
     "apps.user",
     "apps.invoice",
+    "apps.payment",
     "apps.third_party.call_pro",
     "apps.third_party.qpay",
 ]

@@ -47,13 +47,13 @@ class QPayService:
             return None, str(e)
 
     @staticmethod
-    def create_invoice(amount: Decimal):
+    def create_invoice(amount: Decimal, phone: int):
         data = InvoiceRequest(
             invoice_code=env("QPAY_INVOICE_CODE"),
             sender_invoice_no=str(NumberHelper.get_random_number(8)),
-            invoice_receiver_code="partner.name",
-            invoice_description="partner.name",
-            sender_branch_code="branch",
+            invoice_receiver_code=str(phone),
+            invoice_description=str(phone),
+            sender_branch_code="01",
             amount=amount,
             callback_url=f"{env("HOST")}/payments",
         )
