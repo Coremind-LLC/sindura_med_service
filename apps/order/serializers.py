@@ -1,7 +1,37 @@
+from django.db import transaction
 from rest_framework import serializers
+
+from apps.examination.models import Examination
+from apps.examination.services import ExaminationService
+from apps.invoice.serializers import InvoiceSerializer
+from apps.invoice.services import InvoiceService
 from apps.order.models import Order
 
 class OrderSerializer(serializers.ModelSerializer):
+    examination = serializers.PrimaryKeyRelatedField(
+        queryset=Examination.objects.all(), required=True
+    )
+    examination_amount = serializers.DecimalField(
+        source="examination.amount", read_only=True, max_digits=20, decimal_places=2
+    )
+    invoice = InvoiceSerializer(read_only=True)
+
     class Meta:
         model = Order
         fields = "__all__"
+
+    @transaction.atomic
+    def create(self, validated_data):
+        request = self.context["request"]
+
+        order = super().create(validated_data)
+
+        invoice, error = InvoiceService.create(order, request)
+        if error:
+            raise serializers.ValidationError(f"Invoice creation failed: {error}")
+
+        ExaminationService.lock(order.examination.id)
+
+        order.invoice = invoice
+
+        return order

@@ -17,6 +17,7 @@ class ExaminationPack(BaseModel):
         Doctor, on_delete=models.PROTECT, null=True, blank=True
     )
     period = models.IntegerField(null=True, blank=True)
+    amount = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
 
     class Meta:
         db_table = "examination_pack"

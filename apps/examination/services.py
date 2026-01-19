@@ -70,6 +70,22 @@ class ExaminationService:
         return serializer.data
 
     @staticmethod
+    def lock(id: int):
+        instance = get_object_or_404(Examination, pk=id)
+        if not instance.is_lock:
+            instance.is_lock = True
+            instance.save(update_fields=["is_lock"])
+        return instance
+
+    @staticmethod
+    def unlock(id: int):
+        instance = get_object_or_404(Examination, pk=id)
+        if not instance.is_lock:
+            instance.is_lock = False
+            instance.save(update_fields=["is_lock"])
+        return instance
+
+    @staticmethod
     def delete(id: int):
         instance = get_object_or_404(Examination, pk=id)
         instance.status = Status.DELETED
