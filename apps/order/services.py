@@ -59,6 +59,18 @@ class OrderService:
         return instance
 
     @staticmethod
+    def cancel(id: int):
+        instance = get_object_or_404(Order, pk=id)
+
+        if instance.stage == OrderStage.PAID:
+            return instance
+
+        instance.stage = OrderStage.CANCELLED
+        instance.updated_at = timezone.now()
+        instance.save(update_fields=["stage", "updated_at"])
+        return instance
+
+    @staticmethod
     def delete(id: int):
         instance = get_object_or_404(Order, pk=id)
         instance.status = Status.DELETED

@@ -24,6 +24,11 @@ class OrderSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context["request"]
 
+        if request and not request.user.is_anonymous:
+            validated_data["created_by"] = request.user
+        else:
+            validated_data["created_by"] = None
+
         order = super().create(validated_data)
 
         invoice, error = InvoiceService.create(order, request)
