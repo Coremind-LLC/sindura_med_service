@@ -50,10 +50,7 @@ class PaymentViewSet(ViewSet):
         if invoice.stage == InvoiceStage.PAID:
             return Response({"message": "Invoice paid"}, status=HTTPStatus.OK)
 
-        if invoice.order.stage not in (
-            OrderStage.PENDING,
-            OrderStage.CANCELLED,
-        ):
+        if invoice.order.stage == OrderStage.PAID:
             return Response({"message": "Order paid"}, status=HTTPStatus.OK)
 
         invoice, error = InvoiceService.approve(invoice.id)
@@ -83,7 +80,7 @@ class PaymentViewSet(ViewSet):
         if invoice.stage == InvoiceStage.PAID:
             return Response({"message": "Invoice paid"}, status=HTTPStatus.OK)
 
-        if invoice.order.stage not in (OrderStage.PENDING, OrderStage.CANCEL):
+        if invoice.order.stage == OrderStage.PAID:
             return Response({"message": "Order paid"}, status=HTTPStatus.OK)
 
         response, error = QPayService.check_payment(invoice.qpay_invoice_id)
