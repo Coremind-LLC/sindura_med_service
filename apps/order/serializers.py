@@ -44,4 +44,6 @@ class OrderSerializer(serializers.ModelSerializer):
 
         order.invoice = invoice
 
+        check_order_stage.apply_async((order.id,), countdown=300)
+
         return order
