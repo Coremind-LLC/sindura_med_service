@@ -24,6 +24,11 @@ class OrderSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context["request"]
 
+        examination = validated_data["examination"]
+
+        if examination.is_lock:
+            raise serializers.ValidationError("Examination already locked")
+
         if request and not request.user.is_anonymous:
             validated_data["created_by"] = request.user
         else:
