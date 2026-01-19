@@ -16,16 +16,12 @@ class UserSerializer(serializers.ModelSerializer):
         if error:
             raise serializers.ValidationError({"error": str(error)})
         if exist_phone:
-            raise serializers.ValidationError(
-                {"phone": "Утас дээр бүртгэлтэй тул үүсгэх боломжгүй"}
-            )
+            raise serializers.ValidationError({"phone": "Утас дээр бүртгэлтэй тул үүсгэх боломжгүй"})
         exist_email, error = UserService.exist_by_email(validated_data["email"])
         if error:
             raise serializers.ValidationError({"error": str(error)})
         if exist_email:
-            raise serializers.ValidationError(
-                {"phone": "Имейл дээр бүртгэлтэй тул үүсгэх боломжгүй"}
-            )
+            raise serializers.ValidationError({"phone": "Имейл дээр бүртгэлтэй тул үүсгэх боломжгүй"})
 
         user = User.objects.create_user(**validated_data)
 
