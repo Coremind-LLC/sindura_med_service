@@ -24,6 +24,11 @@ class OrderSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context["request"]
 
+        examination = validated_data["examination"]
+
+        if examination.is_lock:
+            raise serializers.ValidationError({"examination": "Examination already locked"})
+
         if request and not request.user.is_anonymous:
             validated_data["created_by"] = request.user
         else:
@@ -33,7 +38,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
         invoice, error = InvoiceService.create(order, request)
         if error:
-            raise serializers.ValidationError(f"Invoice creation failed: {error}")
+            raise serializers.ValidationError({"invoice": f"Invoice creation failed: {error}"})
 
         ExaminationService.lock(order.examination.id)
 

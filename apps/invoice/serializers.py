@@ -14,8 +14,6 @@ class InvoiceSerializer(serializers.ModelSerializer):
     amount = serializers.DecimalField(
         max_digits=20, decimal_places=2, required=True
     )
-    # created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    # updated_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     def get_qpay(self, obj: Invoice):
         if obj.qpay:

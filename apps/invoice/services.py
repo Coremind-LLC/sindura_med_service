@@ -37,9 +37,7 @@ class InvoiceService:
         try:
             qpay_response, error = QPayService.create_invoice(order.examination.amount, order.phone)
             if error:
-                raise serializers.ValidationError(
-                    "QPay invoice not created."
-                )
+                raise serializers.ValidationError({"qpay": "QPay invoice not created."})
 
             invoice_data = {
                 "order": order.id,

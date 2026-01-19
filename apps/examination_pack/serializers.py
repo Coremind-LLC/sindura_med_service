@@ -82,9 +82,7 @@ class ExaminationPackSerializer(serializers.ModelSerializer):
         request = self.context["request"]
 
         if ExaminationService.has_locked_by_examination_pack(instance.id):
-            raise serializers.ValidationError(
-                "Cannot update this examination pack because it has locked examinations."
-            )
+            raise serializers.ValidationError({"examination": "Cannot update this examination pack because it has locked examinations."})
 
         instance.dates = validated_data.get("dates", instance.dates)
         instance.start_time = validated_data.get("start_time", instance.start_time)
