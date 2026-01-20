@@ -101,4 +101,5 @@ class InvoiceService:
     def delete(id: int):
         instance = get_object_or_404(Invoice, pk=id)
         instance.status = Status.DELETED
-        instance.save(update_fields=["status"])
+        instance.updated_at = timezone.now()
+        instance.save(update_fields=["status", "updated_at"])
