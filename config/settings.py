@@ -217,8 +217,18 @@ DATABASES = {
     }
 }
 
-CELERY_BROKER_URL = f"redis://{env("REDIS_HOST")}:{env("REDIS_PORT")}/{env("REDIS_DB")}"
-CELERY_RESULT_BACKEND = f"redis://{env("REDIS_HOST")}:{env("REDIS_PORT")}/{env("REDIS_DB")}"
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{env('REDIS_HOST')}:{env('REDIS_PORT')}/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
+
+CELERY_BROKER_URL = f"redis://{env("REDIS_HOST")}:{env("REDIS_PORT")}/0"
+CELERY_RESULT_BACKEND = f"redis://{env("REDIS_HOST")}:{env("REDIS_PORT")}/0"
 
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
