@@ -19,10 +19,9 @@ class OrderService:
         return serializer.data
 
     @staticmethod
-    def get_by_id(id: int):
-        instance = get_object_or_404(Order, pk=id)
-        serializer = OrderSerializer(instance)
-        return serializer.data
+    def get_by_id(id: int) -> Order:
+        #return get_object_or_404(Order, pk=id)
+        return Order.objects.select_related("examination").get(pk=id)
 
     @staticmethod
     def create(data: dict, request):
@@ -74,4 +73,5 @@ class OrderService:
     def delete(id: int):
         instance = get_object_or_404(Order, pk=id)
         instance.status = Status.DELETED
-        instance.save(update_fields=["status"])
+        instance.updated_at = timezone.now()
+        instance.save(update_fields=["status", "updated_at"])

@@ -16,6 +16,7 @@ class Order(BaseModel):
     stage = models.CharField(
         choices=OrderStage.choices, max_length=20, default=OrderStage.PENDING
     )
+    expire_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "order"

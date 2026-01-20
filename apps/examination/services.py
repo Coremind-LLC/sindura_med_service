@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from apps.common.enums import Status
 from apps.examination.models import Examination
 from apps.examination.serializers import ExaminationSerializer
+from django.utils import timezone
 
 class ExaminationService:
 
@@ -74,22 +75,25 @@ class ExaminationService:
         instance = get_object_or_404(Examination, pk=id)
         if not instance.is_lock:
             instance.is_lock = True
-            instance.save(update_fields=["is_lock"])
+            instance.updated_at = timezone.now()
+            instance.save(update_fields=["is_lock", "updated_at"])
         return instance
 
     @staticmethod
     def unlock(id: int):
         instance = get_object_or_404(Examination, pk=id)
-        if not instance.is_lock:
+        if instance.is_lock:
             instance.is_lock = False
-            instance.save(update_fields=["is_lock"])
+            instance.updated_at = timezone.now()
+            instance.save(update_fields=["is_lock", "updated_at"])
         return instance
 
     @staticmethod
     def delete(id: int):
         instance = get_object_or_404(Examination, pk=id)
         instance.status = Status.DELETED
-        instance.save(update_fields=["status"])
+        instance.updated_at = timezone.now()
+        instance.save(update_fields=["status", "updated_at"])
 
     @staticmethod
     def delete_by_examination_pack(examination_pack_id: int):
