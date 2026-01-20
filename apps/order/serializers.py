@@ -38,7 +38,7 @@ class OrderSerializer(serializers.ModelSerializer):
         else:
             validated_data["created_by"] = None
 
-        validated_data["expire_at"] = timezone.now() + timedelta(minutes=1)
+        validated_data["expire_at"] = timezone.now() + timedelta(minutes=5)
 
         order = super().create(validated_data)
 
