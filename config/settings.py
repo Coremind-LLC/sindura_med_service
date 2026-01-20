@@ -217,8 +217,8 @@ DATABASES = {
     }
 }
 
-CELERY_BROKER_URL = f"redis://:{env("REDIS_HOST")}:{env("REDIS_PORT")}/{env("REDIS_DB")}"
-CELERY_RESULT_BACKEND = f"redis://:{env("REDIS_HOST")}:{env("REDIS_PORT")}/{env("REDIS_DB")}"
+CELERY_BROKER_URL = f"redis://{env("REDIS_HOST")}:{env("REDIS_PORT")}/{env("REDIS_DB")}"
+CELERY_RESULT_BACKEND = f"redis://{env("REDIS_HOST")}:{env("REDIS_PORT")}/{env("REDIS_DB")}"
 
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
