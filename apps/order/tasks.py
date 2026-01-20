@@ -25,8 +25,6 @@ def check_order_stage(order_id, invoice_id):
         if order.expire_at and timezone.now() < order.expire_at:
             return
 
-        logger.info(f"Invoice {invoice_id}")
-
         InvoiceService.cancel(invoice_id)
         OrderService.cancel(order_id)
         ExaminationService.unlock(order.examination.id)
