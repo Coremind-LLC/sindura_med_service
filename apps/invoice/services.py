@@ -21,10 +21,11 @@ class InvoiceService:
         return serializer.data
 
     @staticmethod
-    def get_by_id(id: int):
-        instance = get_object_or_404(Invoice, pk=id)
-        serializer = InvoiceSerializer(instance)
-        return serializer.data
+    def get_by_id(id: int) -> Invoice:
+        return get_object_or_404(
+            Invoice.objects.select_related("order"),
+            pk=id
+        )
 
     @staticmethod
     def get_by_qpay_invoice_id(qpay_invoice_id: str):

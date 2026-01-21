@@ -15,6 +15,7 @@ from apps.examination_pack.views import ExaminationPackViewSet
 from apps.examination_type.views import ExaminationTypeViewSet
 from apps.file.views import FileViewSet
 from apps.order.views import OrderViewSet
+from apps.payment.views import PaymentViewSet
 from apps.user.views import UserViewSet
 
 
@@ -35,6 +36,7 @@ router.register(r"examinations", ExaminationViewSet)
 router.register(r"examination-packs", ExaminationPackViewSet)
 router.register(r"examination-types", ExaminationTypeViewSet)
 router.register(r"orders", OrderViewSet)
+router.register(r"payments", PaymentViewSet, basename="payment")
 router.register(r"files", FileViewSet, basename="file")
 router.register(r"auth", AuthViewSet, basename="auth")
 

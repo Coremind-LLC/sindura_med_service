@@ -57,7 +57,7 @@ class PaymentViewSet(ViewSet):
         if error:
             return Response({"message": error}, status=HTTPStatus.BAD_REQUEST)
 
-        order, error = OrderService.approve(invoice.order_id)
+        order, error = OrderService.approve(invoice.order.id)
         if error:
             return Response({"message": error}, status=HTTPStatus.BAD_REQUEST)
 
@@ -94,7 +94,7 @@ class PaymentViewSet(ViewSet):
         if error:
             return Response({"message": error}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
-        _, error = OrderService.approve(invoice.order_id)
+        _, error = OrderService.approve(invoice.order.id)
         if error:
             return Response({"message": error}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
