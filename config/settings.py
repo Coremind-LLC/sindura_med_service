@@ -227,8 +227,8 @@ CACHES = {
     }
 }
 
-CELERY_BROKER_URL = f"redis://{env("REDIS_HOST")}:{env("REDIS_PORT")}/0"
-CELERY_RESULT_BACKEND = f"redis://{env("REDIS_HOST")}:{env("REDIS_PORT")}/0"
+CELERY_BROKER_URL = f"redis://{env('REDIS_HOST')}:{env('REDIS_PORT')}/0"
+CELERY_RESULT_BACKEND = f"redis://{env('REDIS_HOST')}:{env('REDIS_PORT')}/0"
 
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
