@@ -20,7 +20,7 @@ class PaymentViewSet(ViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
-        if self.action == "get_payment":
+        if self.action in ["get_payment", "check_payment"]:
             return [permissions.AllowAny()]
         return super().get_permissions()
 

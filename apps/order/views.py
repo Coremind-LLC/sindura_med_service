@@ -1,3 +1,4 @@
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from apps.common.views import BaseViewSet
@@ -12,3 +13,6 @@ class OrderViewSet(BaseViewSet):
         if self.request.method == "POST":
             return [AllowAny()]
         return [IsAuthenticated()]
+
+    # @action(detail=False, methods=["get"], url_path="(?P<order_id>\d+)/approve")
+    # def approve(self, request, order_id):
