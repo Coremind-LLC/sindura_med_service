@@ -53,13 +53,15 @@ class PaymentViewSet(ViewSet):
         if invoice.order.stage == OrderStage.PAID:
             return Response({"message": "Order paid"}, status=HTTPStatus.OK)
 
-        invoice, error = InvoiceService.approve(invoice.id)
-        if error:
-            return Response({"message": error}, status=HTTPStatus.BAD_REQUEST)
+        # invoice, error = InvoiceService.approve(invoice.id)
+        # if error:
+        #     return Response({"message": error}, status=HTTPStatus.BAD_REQUEST)
+        invoice = InvoiceService.approve(invoice.id)
 
-        order, error = OrderService.approve(invoice.order.id)
-        if error:
-            return Response({"message": error}, status=HTTPStatus.BAD_REQUEST)
+        # order, error = OrderService.approve(invoice.order.id)
+        # if error:
+        #     return Response({"message": error}, status=HTTPStatus.BAD_REQUEST)
+        OrderService.approve(invoice.order.id)
 
         return Response({"message": "Payment is successfully"}, status=HTTPStatus.OK)
 
@@ -90,13 +92,15 @@ class PaymentViewSet(ViewSet):
         if (len(response.rows) == 0 or response.rows[0].payment_status != PaymentStatus.PAID):
             return Response({"message": "Invoice not paid"}, status=HTTPStatus.OK)
 
-        _, error = InvoiceService.approve(invoice.id)
-        if error:
-            return Response({"message": error}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        # _, error = InvoiceService.approve(invoice.id)
+        # if error:
+        #     return Response({"message": error}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        InvoiceService.approve(invoice.id)
 
-        _, error = OrderService.approve(invoice.order.id)
-        if error:
-            return Response({"message": error}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        # _, error = OrderService.approve(invoice.order.id)
+        # if error:
+        #     return Response({"message": error}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        OrderService.approve(invoice.order.id)
 
         CallProService.send(invoice.order.phone, "Таны захиалга баталгаажлаа")
 
