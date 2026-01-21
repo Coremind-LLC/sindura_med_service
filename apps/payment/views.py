@@ -53,15 +53,12 @@ class PaymentViewSet(ViewSet):
         if invoice.order.stage == OrderStage.PAID:
             return Response({"message": "Order paid"}, status=HTTPStatus.OK)
 
-        # invoice, error = InvoiceService.approve(invoice.id)
-        # if error:
-        #     return Response({"message": error}, status=HTTPStatus.BAD_REQUEST)
-        invoice = InvoiceService.approve(invoice.id)
-
-        # order, error = OrderService.approve(invoice.order.id)
-        # if error:
-        #     return Response({"message": error}, status=HTTPStatus.BAD_REQUEST)
-        OrderService.approve(invoice.order.id)
+        try:
+            invoice = InvoiceService.approve(invoice.id)
+            OrderService.approve(invoice.order.id)
+        except Exception as e:
+            logger.error(f"Failed to approve invoice/order {invoice.id}: {e}")
+            return Response({"message": f"Failed to approve invoice/order: {e}"}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
         return Response({"message": "Payment is successfully"}, status=HTTPStatus.OK)
 
@@ -80,28 +77,25 @@ class PaymentViewSet(ViewSet):
             )
 
         if invoice.stage == InvoiceStage.PAID:
-            return Response({"message": "Invoice paid"}, status=HTTPStatus.OK)
+            return Response({"message": "Invoice paid", "status": "paid"}, status=HTTPStatus.OK)
 
         if invoice.order.stage == OrderStage.PAID:
-            return Response({"message": "Order paid"}, status=HTTPStatus.OK)
+            return Response({"message": "Order paid", "status": "paid"}, status=HTTPStatus.OK)
 
         response, error = QPayService.check_payment(invoice.qpay_invoice_id)
         if error:
             return Response({"message": error}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
         if (len(response.rows) == 0 or response.rows[0].payment_status != PaymentStatus.PAID):
-            return Response({"message": "Invoice not paid"}, status=HTTPStatus.OK)
+            return Response({"message": "Invoice not paid", "status": "not paid"}, status=HTTPStatus.OK)
 
-        # _, error = InvoiceService.approve(invoice.id)
-        # if error:
-        #     return Response({"message": error}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
-        InvoiceService.approve(invoice.id)
+        try:
+            InvoiceService.approve(invoice.id)
+            OrderService.approve(invoice.order.id)
+        except Exception as e:
+            logger.error(f"Failed to approve invoice/order {invoice.id}: {e}")
+            return Response({"message": f"Failed to approve invoice/order: {e}"}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
-        # _, error = OrderService.approve(invoice.order.id)
-        # if error:
-        #     return Response({"message": error}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
-        OrderService.approve(invoice.order.id)
+        CallProService.send(invoice.order.phone, "Tanii zahialga batalgaajlaa. Sindura med.")
 
-        CallProService.send(invoice.order.phone, "Таны захиалга баталгаажлаа")
-
-        return Response({"message": "Төлбөр амжилттай төлөгдлөө"}, status=HTTPStatus.OK)
+        return Response({"message": "Төлбөр амжилттай төлөгдлөө", "status": "paid"}, status=HTTPStatus.OK)
