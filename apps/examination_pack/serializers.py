@@ -22,7 +22,8 @@ class ExaminationPackSerializer(serializers.ModelSerializer):
         queryset=ExaminationType.objects.all(), required=True
     )
     period = serializers.IntegerField(required=True)
-    amount = serializers.DecimalField(max_digits=20, decimal_places=2, required=True)
+    total_amount = serializers.DecimalField(max_digits=20, decimal_places=2, required=True)
+    deposit_amount = serializers.DecimalField(max_digits=20, decimal_places=2, required=True)
     doctor_first_name = serializers.CharField(source="doctor.first_name", read_only=True)
     doctor_last_name = serializers.CharField(source="doctor.last_name", read_only=True)
     doctor_position = serializers.CharField(source="doctor.position", read_only=True)
@@ -47,7 +48,8 @@ class ExaminationPackSerializer(serializers.ModelSerializer):
         period = validated_data.get("period")
         doctor = validated_data.get("doctor")
         examination_type = validated_data.get("examination_type")
-        amount = validated_data.get("amount")
+        total_amount = validated_data.get("total_amount")
+        deposit_amount = validated_data.get("deposit_amount")
 
         examinations = []
 
@@ -68,7 +70,8 @@ class ExaminationPackSerializer(serializers.ModelSerializer):
                     "examination_type": examination_type.id,
                     "date": date,
                     "time": slot_datetime.time(),
-                    "amount": amount,
+                    "total_amount": total_amount,
+                    "deposit_amount": deposit_amount,
                 })
 
                 slot_datetime += timedelta(minutes=period)
@@ -92,7 +95,8 @@ class ExaminationPackSerializer(serializers.ModelSerializer):
         instance.period = validated_data.get("period", instance.period)
         instance.doctor = validated_data.get("doctor", instance.doctor)
         instance.examination_type = validated_data.get("examination_type", instance.examination_type)
-        instance.amount = validated_data.get("amount", instance.amount)
+        instance.total_amount = validated_data.get("total_amount", instance.total_amount)
+        instance.deposit_amount = validated_data.get("deposit_amount", instance.deposit_amount)
 
         instance.save()
 
@@ -106,7 +110,8 @@ class ExaminationPackSerializer(serializers.ModelSerializer):
         period = instance.period
         doctor = instance.doctor
         examination_type = instance.examination_type
-        amount = instance.amount
+        total_amount = instance.total_amount
+        deposit_amount = instance.deposit_amount
 
         examinations = []
 
@@ -131,7 +136,8 @@ class ExaminationPackSerializer(serializers.ModelSerializer):
                     "examination_type": examination_type.id,
                     "date": date,
                     "time": slot_datetime.time(),
-                    "amount": amount,
+                    "total_amount": total_amount,
+                    "deposit_amount": deposit_amount,
                 })
 
                 slot_datetime += timedelta(minutes=period)
