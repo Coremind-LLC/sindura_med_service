@@ -16,7 +16,8 @@ class ExaminationSerializer(serializers.ModelSerializer):
     examination_type = serializers.PrimaryKeyRelatedField(
         queryset=ExaminationType.objects.all(), required=True
     )
-    amount = serializers.DecimalField(max_digits=20, decimal_places=2, required=True)
+    total_amount = serializers.DecimalField(max_digits=20, decimal_places=2, required=True)
+    deposit_amount = serializers.DecimalField(max_digits=20, decimal_places=2, required=True)
     doctor_first_name = serializers.CharField(source="doctor.first_name", read_only=True)
     doctor_last_name = serializers.CharField(source="doctor.last_name", read_only=True)
     doctor_position = serializers.CharField(source="doctor.position", read_only=True)

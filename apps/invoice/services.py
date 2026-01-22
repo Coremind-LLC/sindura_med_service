@@ -36,13 +36,13 @@ class InvoiceService:
     @staticmethod
     def create(order: Order, request):
         try:
-            qpay_response, error = QPayService.create_invoice(order.examination.amount, order.phone)
+            qpay_response, error = QPayService.create_invoice(order.examination.deposit_amount, order.phone)
             if error:
                 raise serializers.ValidationError({"qpay": "QPay invoice not created."})
 
             invoice_data = {
                 "order": order.id,
-                "amount": order.examination.amount,
+                "amount": order.examination.deposit_amount,
                 "qpay_invoice_id": qpay_response.invoice_id,
                 "stage": InvoiceStage.PENDING,
             }
@@ -90,7 +90,7 @@ class InvoiceService:
     def cancel(id: int):
         instance = get_object_or_404(Invoice, pk=id)
 
-        if instance.stage == InvoiceStage.PAID:
+        if instance.stage == InvoiceStage.CANCELLED:
             return instance
 
         instance.stage = InvoiceStage.CANCELLED
