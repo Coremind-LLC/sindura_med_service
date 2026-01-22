@@ -1,4 +1,5 @@
 from rest_framework.decorators import action
+from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
@@ -15,6 +16,12 @@ class OrderViewSet(BaseViewSet):
         if self.action in ["create", "list"]:
             return [AllowAny()]
         return [IsAuthenticated()]
+
+    def update(self, request, *args, **kwargs):
+        raise MethodNotAllowed("PUT", detail="Update is disabled for order")
+
+    def destroy(self, request, *args, **kwargs):
+        raise MethodNotAllowed("DELETE", detail="Delete is disabled for order")
 
     # def create(self, request, *args, **kwargs):
     #     serializer = self.get_serializer(data=request.data)
