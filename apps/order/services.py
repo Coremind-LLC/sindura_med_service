@@ -30,6 +30,7 @@ class OrderService:
 
     @staticmethod
     def create(data: dict, request):
+        data["is_manual"] = False
         data["stage"] = OrderStage.PENDING
         data["expire_at"] = timezone.now() + timedelta(minutes=5)
 
@@ -54,6 +55,7 @@ class OrderService:
 
     @staticmethod
     def create_manual(data: dict, request):
+        data["is_manual"] = True
         data["stage"] = OrderStage.PAID
 
         serializer = OrderSerializer(
