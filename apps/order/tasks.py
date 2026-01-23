@@ -26,7 +26,7 @@ def check_order_stage(order_id, invoice_id):
             return
 
         InvoiceService.cancel(invoice_id)
-        OrderService.cancel(order_id)
+        OrderService.cancel(order_id, None)
         ExaminationService.unlock(order.examination.id)
 
         logger.info(f"Order {order.id} expired and cancelled successfully.")
