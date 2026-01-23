@@ -97,14 +97,15 @@ class OrderService:
         return instance
 
     @staticmethod
-    def approve(id: int, data: dict | None):
+    def approve(id: int, data: dict | None, is_task: bool):
         instance = get_object_or_404(Order, pk=id)
 
-        if instance.stage != OrderStage.CANCELLED:
-            raise serializers.ValidationError({"message": "Only cancelled orders can be approved"})
+        if not is_task:
+            if instance.stage != OrderStage.CANCELLED:
+                raise serializers.ValidationError({"message": "Only cancelled orders can be approved"})
 
-        if instance.examination.is_lock:
-            raise serializers.ValidationError({"message": "Examination already locked"})
+            if instance.examination.is_lock:
+                raise serializers.ValidationError({"message": "Examination already locked"})
 
         update_fields = ["stage", "updated_at"]
 
@@ -119,11 +120,12 @@ class OrderService:
         return instance
 
     @staticmethod
-    def cancel(id: int, data: dict | None):
+    def cancel(id: int, data: dict | None, is_task: bool):
         instance = get_object_or_404(Order, pk=id)
 
-        if instance.stage != OrderStage.PAID:
-            raise serializers.ValidationError({"message": "Only paid orders can be cancelled"})
+        if not is_task:
+            if instance.stage != OrderStage.PAID:
+                raise serializers.ValidationError({"message": "Only paid orders can be cancelled"})
 
         update_fields = ["stage", "updated_at"]
 
