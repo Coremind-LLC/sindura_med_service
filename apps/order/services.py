@@ -70,39 +70,71 @@ class OrderService:
         return order
 
     @staticmethod
-    def update(id: int, data: dict, request):
-        instance = get_object_or_404(Order, pk=id)
-        serializer = OrderSerializer(
-            instance,
-            data=data,
-            context={"request": request},
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return serializer.data
-
-    @staticmethod
-    def approve(id: int):
+    def update(id: int, data: dict):
         instance = get_object_or_404(Order, pk=id)
 
-        if instance.stage == OrderStage.PAID:
-            return instance
+        if instance.stage != OrderStage.PAID:
+            raise serializers.ValidationError({"message": "Only paid orders can be updated"})
 
-        instance.stage = OrderStage.PAID
+        examination = ExaminationService.get_by_id(data["examination"])
+
+        if instance.examination.id != data["examination"]:
+            if examination.is_lock:
+                raise serializers.ValidationError({"message": "Examination already locked"})
+
+            ExaminationService.lock(data["examination"])
+            ExaminationService.unlock(instance.examination.id)
+
+        instance.first_name = data["first_name"]
+        instance.last_name = data["last_name"]
+        instance.phone = data["phone"]
+        instance.register = data["register"]
+        instance.reason = data["reason"]
+        instance.is_refund = data["is_refund"]
+        instance.examination = examination
         instance.updated_at = timezone.now()
-        instance.save(update_fields=["stage", "updated_at"])
+        instance.save(update_fields=["first_name", "last_name", "phone", "register", "reason", "is_refund", "examination", "updated_at"])
         return instance
 
     @staticmethod
-    def cancel(id: int):
+    def approve(id: int, data: dict | None):
         instance = get_object_or_404(Order, pk=id)
 
-        if instance.stage == OrderStage.CANCELLED:
-            return instance
+        if instance.stage != OrderStage.CANCELLED:
+            raise serializers.ValidationError({"message": "Only cancelled orders can be approved"})
+
+        if instance.examination.is_lock:
+            raise serializers.ValidationError({"message": "Examination already locked"})
+
+        update_fields = ["stage", "updated_at"]
+
+        if data is not None:
+            instance.reason = data["reason"]
+            instance.is_refund = data["is_refund"]
+            update_fields += ["reason", "is_refund"]
+
+        instance.stage = OrderStage.PAID
+        instance.updated_at = timezone.now()
+        instance.save(update_fields=update_fields)
+        return instance
+
+    @staticmethod
+    def cancel(id: int, data: dict | None):
+        instance = get_object_or_404(Order, pk=id)
+
+        if instance.stage != OrderStage.PAID:
+            raise serializers.ValidationError({"message": "Only paid orders can be cancelled"})
+
+        update_fields = ["stage", "updated_at"]
+
+        if data is not None:
+            instance.reason = data["reason"]
+            instance.is_refund = data["is_refund"]
+            update_fields += ["reason", "is_refund"]
 
         instance.stage = OrderStage.CANCELLED
         instance.updated_at = timezone.now()
-        instance.save(update_fields=["stage", "updated_at"])
+        instance.save(update_fields=update_fields)
         return instance
 
     @staticmethod

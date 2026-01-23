@@ -15,9 +15,7 @@ class ExaminationService:
 
     @staticmethod
     def get_by_id(id: int):
-        instance = get_object_or_404(Examination, pk=id)
-        serializer = ExaminationSerializer(instance)
-        return serializer.data
+        return get_object_or_404(Examination, pk=id)
 
     @staticmethod
     def get_locked_by_examination_pack(examination_pack_id: int):

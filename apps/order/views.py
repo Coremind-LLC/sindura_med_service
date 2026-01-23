@@ -20,9 +20,6 @@ class OrderViewSet(BaseViewSet):
             return [AllowAny()]
         return [IsAuthenticated()]
 
-    def update(self, request, *args, **kwargs):
-        raise MethodNotAllowed("PUT", detail="Update is disabled for order")
-
     def destroy(self, request, *args, **kwargs):
         raise MethodNotAllowed("DELETE", detail="Delete is disabled for order")
 
@@ -47,10 +44,17 @@ class OrderViewSet(BaseViewSet):
             status=status.HTTP_201_CREATED
         )
 
+    def update(self, request, pk=None, *args, **kwargs):
+        order = OrderService.update(pk, request.data)
+        return Response(
+            self.get_serializer(order).data,
+            status=status.HTTP_201_CREATED
+        )
+
     @action(detail=True, methods=["patch"], url_path="approve")
     @transaction.atomic
     def approve(self, request, pk=None):
-        order = OrderService.approve(pk)
+        order = OrderService.approve(pk, request.data)
         ExaminationService.lock(order.examination_id)
 
         return Response({"message": "Order approved"})
@@ -58,7 +62,7 @@ class OrderViewSet(BaseViewSet):
     @action(detail=True, methods=["patch"], url_path="cancel")
     @transaction.atomic
     def cancel(self, request, pk=None):
-        order = OrderService.cancel(pk)
+        order = OrderService.cancel(pk, request.data)
         ExaminationService.unlock(order.examination_id)
 
         return Response({"message": "Order cancelled"})
