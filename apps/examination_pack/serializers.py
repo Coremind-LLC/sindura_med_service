@@ -50,6 +50,7 @@ class ExaminationPackSerializer(serializers.ModelSerializer):
         examination_type = validated_data.get("examination_type")
         total_amount = validated_data.get("total_amount")
         deposit_amount = validated_data.get("deposit_amount")
+        room = validated_data.get("room")
 
         examinations = []
 
@@ -72,6 +73,7 @@ class ExaminationPackSerializer(serializers.ModelSerializer):
                     "time": slot_datetime.time(),
                     "total_amount": total_amount,
                     "deposit_amount": deposit_amount,
+                    "room": room,
                 })
 
                 slot_datetime += timedelta(minutes=period)
@@ -97,6 +99,7 @@ class ExaminationPackSerializer(serializers.ModelSerializer):
         instance.examination_type = validated_data.get("examination_type", instance.examination_type)
         instance.total_amount = validated_data.get("total_amount", instance.total_amount)
         instance.deposit_amount = validated_data.get("deposit_amount", instance.deposit_amount)
+        instance.room = validated_data.get("room", instance.room)
 
         instance.save()
 
@@ -112,6 +115,7 @@ class ExaminationPackSerializer(serializers.ModelSerializer):
         examination_type = instance.examination_type
         total_amount = instance.total_amount
         deposit_amount = instance.deposit_amount
+        room = instance.room
 
         examinations = []
 
@@ -138,6 +142,7 @@ class ExaminationPackSerializer(serializers.ModelSerializer):
                     "time": slot_datetime.time(),
                     "total_amount": total_amount,
                     "deposit_amount": deposit_amount,
+                    "room": room,
                 })
 
                 slot_datetime += timedelta(minutes=period)
