@@ -30,6 +30,7 @@ class ExaminationPackSerializer(serializers.ModelSerializer):
     examination_type_name = serializers.CharField(
         source="examination_type.name", read_only=True
     )
+    date = serializers.CharField()
 
     class Meta:
         model = ExaminationPack
