@@ -2,7 +2,7 @@ from calendar import monthrange
 from datetime import date
 
 from django.db import transaction
-from rest_framework import status
+from rest_framework import status, permissions
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -17,8 +17,13 @@ class ExaminationPackViewSet(BaseViewSet):
     queryset = ExaminationPack.objects.all()
     serializer_class = ExaminationPackSerializer
 
+    def get_permissions(self):
+        if self.action == "get_available":
+            return [permissions.AllowAny()]
+        return super().get_permissions()
+
     @action(detail=False, methods=["get"], url_path="available")
-    def available(self, request):
+    def get_available(self, request):
         date_param = request.query_params.get("date")
 
         if not date_param:
