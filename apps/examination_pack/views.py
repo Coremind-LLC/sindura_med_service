@@ -38,12 +38,13 @@ class ExaminationPackViewSet(BaseViewSet):
 
         start_date = date(year, month, 1)
         end_date = date(year, month, monthrange(year, month)[1])
+        today = date.today()
 
         available_list = sorted({
             d
             for pack in packs
             for d in pack.dates
-            if start_date <= d <= end_date
+            if start_date <= d <= end_date and d >= today
         })
 
         return Response({
