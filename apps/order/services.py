@@ -32,7 +32,7 @@ class OrderService:
     def create(data: dict, request):
         data["is_manual"] = False
         data["stage"] = OrderStage.PENDING
-        data["expire_at"] = timezone.now() + timedelta(minutes=5)
+        data["expire_at"] = timezone.now() + timedelta(minutes=3)
 
         serializer = OrderSerializer(
             data=data,

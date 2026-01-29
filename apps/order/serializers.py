@@ -7,6 +7,9 @@ from apps.order.models import Order
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    register = serializers.CharField(
+        source="examination.deposit_amount", read_only=True, max_digits=20, decimal_places=2
+    )
     examination = serializers.PrimaryKeyRelatedField(
         queryset=Examination.objects.all(), required=True
     )
