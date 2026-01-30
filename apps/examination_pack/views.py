@@ -22,6 +22,20 @@ class ExaminationPackViewSet(BaseViewSet):
             return [permissions.AllowAny()]
         return super().get_permissions()
 
+    def list(self, request, *args, **kwargs):
+        dates = request.query_params.getlist("dates")
+
+        try:
+            queryset = ExaminationPackService.search_by_dates(dates)
+        except ValueError:
+            return Response(
+                {"message": "Dates must be in YYYY-MM-DD format"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     @action(detail=False, methods=["get"], url_path="available")
     def get_available(self, request):
         date_param = request.query_params.get("date")
