@@ -36,6 +36,20 @@ class ExaminationService:
         ).exists()
 
     @staticmethod
+    def exists_by_doctor(doctor_id: int) -> bool:
+        return Examination.objects.filter(
+            doctor_id=doctor_id,
+            status=Status.ACTIVE
+        ).exists()
+
+    @staticmethod
+    def exists_by_examination_type(examination_type_id: int) -> bool:
+        return Examination.objects.filter(
+            examination_type_id=examination_type_id,
+            status=Status.ACTIVE
+        ).exists()
+
+    @staticmethod
     def create(data: dict, request):
         serializer = ExaminationSerializer(
             data=data,

@@ -38,6 +38,30 @@ class ExaminationPackService:
         )
 
     @staticmethod
+    def search_by_dates(dates: list[str] | None = None):
+        queryset = ExaminationPack.objects.filter(status=Status.ACTIVE)
+
+        if dates:
+            search_dates = [date.fromisoformat(d) for d in dates]
+            queryset = queryset.filter(dates__overlap=search_dates)
+
+        return queryset
+
+    @staticmethod
+    def exists_by_doctor(doctor_id: int) -> bool:
+        return ExaminationPack.objects.filter(
+            doctor_id=doctor_id,
+            status=Status.ACTIVE
+        ).exists()
+
+    @staticmethod
+    def exists_by_examination_type(examination_type_id: int) -> bool:
+        return ExaminationPack.objects.filter(
+            examination_type_id=examination_type_id,
+            status=Status.ACTIVE
+        ).exists()
+
+    @staticmethod
     def create(data: dict, request):
         serializer = ExaminationPackSerializer(
             data=data,

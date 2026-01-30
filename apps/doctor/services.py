@@ -1,5 +1,7 @@
 import logging
 
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from apps.common.enums import Status
 from apps.doctor.models import Doctor
 
@@ -18,3 +20,14 @@ class DoctorService:
             qs = qs.exclude(id=exclude_id)
 
         return qs.exists()
+
+    @staticmethod
+    def delete(id, user):
+        doctor = get_object_or_404(Doctor, pk=id)
+
+        doctor.status = Status.DELETED
+        doctor.updated_at = timezone.now()
+        doctor.updated_by = user
+        doctor.save(update_fields=["status", "updated_at", "updated_by"])
+
+        return doctor
