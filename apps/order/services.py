@@ -73,9 +73,6 @@ class OrderService:
     def update(id: int, data: dict):
         instance = get_object_or_404(Order, pk=id)
 
-        if instance.stage != OrderStage.PAID:
-            raise serializers.ValidationError({"message": "Only paid orders can be updated"})
-
         examination = ExaminationService.get_by_id(data["examination"])
 
         if instance.examination.id != data["examination"]:
