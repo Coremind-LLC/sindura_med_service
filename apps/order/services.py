@@ -1,6 +1,7 @@
 import logging
 from datetime import timedelta
 
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
@@ -20,9 +21,14 @@ class OrderService:
 
     @staticmethod
     def get_all():
-        queryset = Order.objects.all()
-        serializer = OrderSerializer(queryset, many=True)
-        return serializer.data
+        return Order.objects.filter(status=Status.ACTIVE)
+
+    @staticmethod
+    def search(value: str):
+        return OrderService.get_all().filter(
+            Q(phone__icontains=value) |
+            Q(register__icontains=value)
+        )
 
     @staticmethod
     def get_by_id(id: int) -> Order:

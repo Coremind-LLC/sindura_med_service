@@ -20,6 +20,14 @@ class OrderViewSet(BaseViewSet):
             return [AllowAny()]
         return [IsAuthenticated()]
 
+    def get_queryset(self):
+        search = self.request.query_params.get("search", "").strip()
+
+        if search:
+            return OrderService.search(search)
+
+        return OrderService.get_all()
+
     def destroy(self, request, *args, **kwargs):
         raise MethodNotAllowed("DELETE", detail="Delete is disabled for order")
 
