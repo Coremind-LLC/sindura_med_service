@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import Sum, F
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed
@@ -27,6 +28,32 @@ class OrderViewSet(BaseViewSet):
             return OrderService.search(search)
 
         return OrderService.get_all()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        totals = queryset.aggregate(
+            total_amount_sum=Sum(F("examination__total_amount")),
+            deposit_amount_sum=Sum(F("examination__deposit_amount"))
+        )
+
+        total_amount_sum = totals["total_amount_sum"] or 0
+        deposit_amount_sum = totals["deposit_amount_sum"] or 0
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            paginated_data = self.get_paginated_response(serializer.data).data
+            paginated_data["total_amount_sum"] = total_amount_sum
+            paginated_data["deposit_amount_sum"] = deposit_amount_sum
+            return Response(paginated_data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            "results": serializer.data,
+            "total_amount_sum": total_amount_sum,
+            "deposit_amount_sum": deposit_amount_sum
+        })
 
     def destroy(self, request, *args, **kwargs):
         raise MethodNotAllowed("DELETE", detail="Delete is disabled for order")
@@ -62,7 +89,7 @@ class OrderViewSet(BaseViewSet):
     @action(detail=True, methods=["patch"], url_path="approve")
     @transaction.atomic
     def approve(self, request, pk=None):
-        order = OrderService.approve(pk, request.data, False)
+        order = OrderService.approve(pk, request.data, request.user, False)
         ExaminationService.lock(order.examination_id)
 
         return Response({"message": "Order approved"})
@@ -70,7 +97,7 @@ class OrderViewSet(BaseViewSet):
     @action(detail=True, methods=["patch"], url_path="cancel")
     @transaction.atomic
     def cancel(self, request, pk=None):
-        order = OrderService.cancel(pk, request.data, False)
+        order = OrderService.cancel(pk, request.data, request.user, False)
         ExaminationService.unlock(order.examination_id)
 
         return Response({"message": "Order cancelled"})

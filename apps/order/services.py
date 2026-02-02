@@ -16,6 +16,7 @@ from apps.order.serializers import OrderSerializer
 from django.utils import timezone
 
 from apps.order.tasks import check_order_stage
+from apps.user.models import User
 from helpers.common_helper import CommonHelper
 
 logger = logging.getLogger(__name__)
@@ -58,13 +59,6 @@ class OrderService:
 
         order.invoice = invoice
 
-        ActivityLogService.create(ActivityLogAction.CREATE,
-                                  ActivityLogModel.ORDER,
-                                  order.id,
-                                  "Order created",
-                                  CommonHelper.serialize_model(order),
-                                  request.user)
-
         check_order_stage.apply_async(args=(order.id, invoice.id), eta=order.expire_at)
 
         return order
@@ -82,13 +76,6 @@ class OrderService:
         order = serializer.save()
 
         ExaminationService.lock(order.examination.id)
-
-        ActivityLogService.create(ActivityLogAction.CREATE,
-                                  ActivityLogModel.ORDER,
-                                  order.id,
-                                  "Order created",
-                                  CommonHelper.serialize_model(order),
-                                  request.user)
 
         return order
 
@@ -124,7 +111,7 @@ class OrderService:
         return instance
 
     @staticmethod
-    def approve(id: int, data: dict | None, is_task: bool):
+    def approve(id: int, data: dict | None, user: User | None, is_task: bool):
         instance = get_object_or_404(Order, pk=id)
 
         if not is_task:
@@ -141,20 +128,26 @@ class OrderService:
             instance.is_refund = data["is_refund"]
             update_fields += ["reason", "is_refund"]
 
+        if user is not None:
+            instance.updated_by = user
+            update_fields += ["updated_by"]
+
         instance.stage = OrderStage.PAID
         instance.updated_at = timezone.now()
+        instance.updated_by = user
         instance.save(update_fields=update_fields)
 
         ActivityLogService.create(ActivityLogAction.UPDATE,
                                   ActivityLogModel.ORDER,
                                   instance.id,
                                   "Order approved",
-                                  CommonHelper.serialize_model(instance))
+                                  CommonHelper.serialize_model(instance),
+                                  user)
 
         return instance
 
     @staticmethod
-    def cancel(id: int, data: dict | None, is_task: bool):
+    def cancel(id: int, data: dict | None, user: User | None, is_task: bool):
         instance = get_object_or_404(Order, pk=id)
 
         if not is_task:
@@ -168,6 +161,10 @@ class OrderService:
             instance.is_refund = data["is_refund"]
             update_fields += ["reason", "is_refund"]
 
+        if user is not None:
+            instance.updated_by = user
+            update_fields += ["updated_by"]
+
         instance.stage = OrderStage.CANCELLED
         instance.updated_at = timezone.now()
         instance.save(update_fields=update_fields)
@@ -176,7 +173,8 @@ class OrderService:
                                   ActivityLogModel.ORDER,
                                   instance.id,
                                   f"Order cancelled",
-                                  CommonHelper.serialize_model(instance))
+                                  CommonHelper.serialize_model(instance),
+                                  user)
 
         return instance
 
