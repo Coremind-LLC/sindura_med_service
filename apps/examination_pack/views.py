@@ -1,5 +1,5 @@
 from django.db import transaction
-from rest_framework import status, permissions
+from rest_framework import status
 from rest_framework.response import Response
 
 from apps.common.views import BaseViewSet
@@ -11,11 +11,6 @@ from apps.examination_pack.services import ExaminationPackService
 class ExaminationPackViewSet(BaseViewSet):
     queryset = ExaminationPack.objects.all()
     serializer_class = ExaminationPackSerializer
-
-    def get_permissions(self):
-        if self.action == "get_available":
-            return [permissions.AllowAny()]
-        return super().get_permissions()
 
     def list(self, request, *args, **kwargs):
         dates = request.query_params.getlist("dates")

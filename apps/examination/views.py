@@ -7,16 +7,13 @@ from apps.common.views import BaseViewSet
 from apps.examination.models import Examination
 from apps.examination.serializers import ExaminationSerializer
 from apps.examination.services import ExaminationService
-from apps.third_party.qpay.services import QPayService
 
 class ExaminationViewSet(BaseViewSet):
     queryset = Examination.objects.all()
     serializer_class = ExaminationSerializer
 
     def get_permissions(self):
-        if self.action in ["list", "retrieve"]:
-            QPayService.login()
-
+        if self.action in ["list", "retrieve", "get_available"]:
             return [AllowAny()]
         return [IsAuthenticated()]
 
