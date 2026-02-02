@@ -2,7 +2,6 @@ from django.db import transaction
 from rest_framework import serializers
 
 from apps.activity_log.enums import ActivityLogAction, ActivityLogModel
-from apps.activity_log.models import ActivityLog
 from apps.activity_log.services import ActivityLogService
 from apps.examination.models import Examination
 from apps.invoice.serializers import InvoiceSerializer
@@ -43,7 +42,7 @@ class OrderSerializer(serializers.ModelSerializer):
         if examination.is_lock:
             raise serializers.ValidationError({"examination": "Examination already locked"})
 
-        if request and not request.user.is_anonymous:
+        if request and not request.user:
             validated_data["created_by"] = request.user
         else:
             validated_data["created_by"] = None

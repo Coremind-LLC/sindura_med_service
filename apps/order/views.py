@@ -62,7 +62,7 @@ class OrderViewSet(BaseViewSet):
     @action(detail=True, methods=["patch"], url_path="approve")
     @transaction.atomic
     def approve(self, request, pk=None):
-        order = OrderService.approve(pk, request.data, False)
+        order = OrderService.approve(pk, request.data, request.user, False)
         ExaminationService.lock(order.examination_id)
 
         return Response({"message": "Order approved"})
@@ -70,7 +70,7 @@ class OrderViewSet(BaseViewSet):
     @action(detail=True, methods=["patch"], url_path="cancel")
     @transaction.atomic
     def cancel(self, request, pk=None):
-        order = OrderService.cancel(pk, request.data, False)
+        order = OrderService.cancel(pk, request.data, request.user, False)
         ExaminationService.unlock(order.examination_id)
 
         return Response({"message": "Order cancelled"})
