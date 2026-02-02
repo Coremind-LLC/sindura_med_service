@@ -1,10 +1,13 @@
 from django.db import transaction
 from rest_framework import serializers
 
+from apps.activity_log.enums import ActivityLogAction, ActivityLogModel
+from apps.activity_log.models import ActivityLog
+from apps.activity_log.services import ActivityLogService
 from apps.examination.models import Examination
 from apps.invoice.serializers import InvoiceSerializer
 from apps.order.models import Order
-
+from helpers.common_helper import CommonHelper
 
 class OrderSerializer(serializers.ModelSerializer):
     register = serializers.CharField(
@@ -45,4 +48,13 @@ class OrderSerializer(serializers.ModelSerializer):
         else:
             validated_data["created_by"] = None
 
-        return super().create(validated_data)
+        order = super().create(validated_data)
+
+        ActivityLogService.create(ActivityLogAction.CREATE,
+                                  ActivityLogModel.ORDER,
+                                  order.id,
+                                  "Order created",
+                                  CommonHelper.serialize_model(order),
+                                  request.user)
+
+        return order

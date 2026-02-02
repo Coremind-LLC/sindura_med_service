@@ -5,6 +5,8 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
+from apps.activity_log.enums import ActivityLogAction, ActivityLogModel
+from apps.activity_log.services import ActivityLogService
 from apps.common.enums import Status
 from apps.examination.services import ExaminationService
 from apps.invoice.services import InvoiceService
@@ -14,6 +16,7 @@ from apps.order.serializers import OrderSerializer
 from django.utils import timezone
 
 from apps.order.tasks import check_order_stage
+from helpers.common_helper import CommonHelper
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +58,13 @@ class OrderService:
 
         order.invoice = invoice
 
+        ActivityLogService.create(ActivityLogAction.CREATE,
+                                  ActivityLogModel.ORDER,
+                                  order.id,
+                                  "Order created",
+                                  CommonHelper.serialize_model(order),
+                                  request.user)
+
         check_order_stage.apply_async(args=(order.id, invoice.id), eta=order.expire_at)
 
         return order
@@ -72,6 +82,13 @@ class OrderService:
         order = serializer.save()
 
         ExaminationService.lock(order.examination.id)
+
+        ActivityLogService.create(ActivityLogAction.CREATE,
+                                  ActivityLogModel.ORDER,
+                                  order.id,
+                                  "Order created",
+                                  CommonHelper.serialize_model(order),
+                                  request.user)
 
         return order
 
@@ -97,6 +114,13 @@ class OrderService:
         instance.examination = examination
         instance.updated_at = timezone.now()
         instance.save(update_fields=["first_name", "last_name", "phone", "register", "reason", "is_refund", "examination", "updated_at"])
+
+        ActivityLogService.create(ActivityLogAction.UPDATE,
+                                  ActivityLogModel.ORDER,
+                                  instance.id,
+                                  f"Order updated.",
+                                  CommonHelper.serialize_model(instance))
+
         return instance
 
     @staticmethod
@@ -120,6 +144,13 @@ class OrderService:
         instance.stage = OrderStage.PAID
         instance.updated_at = timezone.now()
         instance.save(update_fields=update_fields)
+
+        ActivityLogService.create(ActivityLogAction.UPDATE,
+                                  ActivityLogModel.ORDER,
+                                  instance.id,
+                                  "Order approved",
+                                  CommonHelper.serialize_model(instance))
+
         return instance
 
     @staticmethod
@@ -140,6 +171,13 @@ class OrderService:
         instance.stage = OrderStage.CANCELLED
         instance.updated_at = timezone.now()
         instance.save(update_fields=update_fields)
+
+        ActivityLogService.create(ActivityLogAction.UPDATE,
+                                  ActivityLogModel.ORDER,
+                                  instance.id,
+                                  f"Order cancelled",
+                                  CommonHelper.serialize_model(instance))
+
         return instance
 
     @staticmethod
