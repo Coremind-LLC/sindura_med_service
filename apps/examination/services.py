@@ -1,3 +1,7 @@
+from calendar import monthrange
+from datetime import date, timedelta
+
+from django.db.models import Count
 from django.shortcuts import get_object_or_404
 
 from apps.common.enums import Status
@@ -26,6 +30,28 @@ class ExaminationService:
         )
         serializer = ExaminationSerializer(queryset, many=True)
         return serializer.data
+
+    @staticmethod
+    def get_by_date_and_examination_type(year: int, month: int, examination_type: int):
+        today = date.today()
+        start_date = date(year, month, 1)
+        end_date = date(year, month, monthrange(year, month)[1])
+
+        dates = []
+        current = max(start_date, today)
+        while current <= end_date:
+            dates.append(current)
+            current += timedelta(days=1)
+
+        qs = (
+            Examination.objects
+            .filter(date__in=dates, examination_type=examination_type, status=Status.ACTIVE, is_lock=False)
+            .values('date')
+            .annotate(count=Count('id'))
+            .order_by('date')
+        )
+
+        return qs
 
     @staticmethod
     def has_locked_by_examination_pack(examination_pack_id: int) -> bool:
