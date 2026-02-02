@@ -8,6 +8,7 @@ from rest_framework.permissions import AllowAny
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 
+from apps.activity_log.views import ActivityLogViewSet
 from apps.auth.views import AuthViewSet
 from apps.doctor.views import DoctorViewSet
 from apps.examination.views import ExaminationViewSet
@@ -36,6 +37,7 @@ router.register(r"examinations", ExaminationViewSet)
 router.register(r"examination-packs", ExaminationPackViewSet)
 router.register(r"examination-types", ExaminationTypeViewSet)
 router.register(r"orders", OrderViewSet)
+router.register(r"activity-logs", ActivityLogViewSet)
 router.register(r"payments", PaymentViewSet, basename="payment")
 router.register(r"files", FileViewSet, basename="file")
 router.register(r"auth", AuthViewSet, basename="auth")
