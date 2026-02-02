@@ -1,5 +1,4 @@
-from calendar import monthrange
-from datetime import date, timedelta
+from datetime import date
 
 from django.shortcuts import get_object_or_404
 
@@ -20,22 +19,6 @@ class ExaminationPackService:
         instance = get_object_or_404(ExaminationPack, pk=id)
         serializer = ExaminationPackSerializer(instance)
         return serializer.data
-
-    @staticmethod
-    def get_by_month(year: int, month: int):
-        start_date = date(year, month, 1)
-        end_date = date(year, month, monthrange(year, month)[1])
-
-        dates = []
-        current = start_date
-        while current <= end_date:
-            dates.append(current)
-            current += timedelta(days=1)
-
-        return ExaminationPack.objects.filter(
-            status=Status.ACTIVE,
-            dates__overlap=dates,
-        )
 
     @staticmethod
     def search_by_dates(dates: list[str] | None = None):
