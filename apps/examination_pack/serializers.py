@@ -2,6 +2,9 @@ from datetime import datetime, timedelta
 
 from django.db import transaction
 from rest_framework import serializers, status
+from rest_framework.exceptions import ValidationError
+
+from apps.common.enums import Status
 from apps.doctor.models import Doctor
 from apps.examination.services import ExaminationService
 from apps.examination_pack.models import ExaminationPack
@@ -33,6 +36,32 @@ class ExaminationPackSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExaminationPack
         fields = "__all__"
+
+    def validate(self, attrs):
+        doctor = attrs.get("doctor")
+        examination_type = attrs.get("examination_type")
+        dates = attrs.get("dates")
+
+        if doctor and examination_type and dates:
+            conflict = ExaminationPack.objects.filter(
+                doctor=doctor,
+                examination_type=examination_type,
+                dates__overlap=dates,
+                status=Status.ACTIVE
+            )
+
+            if self.instance:
+                conflict = conflict.exclude(pk=self.instance.pk)
+
+            if conflict.exists():
+                overlapping_dates = sorted(
+                    {d for pack in conflict for d in set(pack.dates) & set(dates)}
+                )
+                raise ValidationError({
+                    "message": f"The following dates are already taken for this doctor and examination type: {overlapping_dates}"
+                })
+
+        return attrs
 
     @transaction.atomic
     def create(self, validated_data):

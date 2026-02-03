@@ -14,3 +14,4 @@ class Invoice(BaseModel):
 
     class Meta:
         db_table = "invoice"
+        ordering = ["-id"]

@@ -1,7 +1,7 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, date
 
-from django.db.models import Q
+from django.db.models import Q, Count, Sum
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
@@ -37,6 +37,23 @@ class OrderService:
     @staticmethod
     def get_by_id(id: int) -> Order:
         return Order.objects.select_related("examination").get(pk=id)
+
+    @staticmethod
+    def get_report(start_date: date, end_date: date):
+        return (Order.objects.filter(
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date,
+            status=Status.ACTIVE
+        )
+            .values("stage")
+            .annotate(
+                count=Count("id"),
+                deposit_amount=Sum(
+                    "examination__deposit_amount",
+                    filter=Q(stage=OrderStage.PAID)
+                )
+            )
+        )
 
     @staticmethod
     def create(data: dict, request):

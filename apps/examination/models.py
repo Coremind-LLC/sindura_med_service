@@ -23,3 +23,4 @@ class Examination(BaseModel):
 
     class Meta:
         db_table = "examination"
+        ordering = ["-id"]

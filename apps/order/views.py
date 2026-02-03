@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db import transaction
 from django.db.models import Sum, F
 from rest_framework import status
@@ -54,6 +56,30 @@ class OrderViewSet(BaseViewSet):
             "total_amount_sum": total_amount_sum,
             "deposit_amount_sum": deposit_amount_sum
         })
+
+    @action(detail=False, methods=["get"], url_path="report")
+    def report(self, request):
+        start_date_str = self.request.query_params.get("start_date")
+        end_date_str = self.request.query_params.get("end_date")
+
+        if not start_date_str or not end_date_str:
+            return Response(
+                {"message": "Start date and end date are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            return Response(
+                {"message": "Date must be in YYYY-MM-DD format"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        response = OrderService.get_report(start_date, end_date)
+
+        return Response({"results": response})
 
     def destroy(self, request, *args, **kwargs):
         raise MethodNotAllowed("DELETE", detail="Delete is disabled for order")

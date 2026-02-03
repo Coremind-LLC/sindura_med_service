@@ -9,3 +9,4 @@ class ExaminationType(BaseModel):
 
     class Meta:
         db_table = "examination_type"
+        ordering = ["-id"]
