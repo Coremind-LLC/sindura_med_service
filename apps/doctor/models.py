@@ -12,3 +12,4 @@ class Doctor(BaseModel):
 
     class Meta:
         db_table = "doctor"
+        ordering = ["-id"]

@@ -1,5 +1,7 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
+from apps.common.enums import Status
 from apps.doctor.models import Doctor
 from apps.examination.models import Examination
 from apps.examination_type.models import ExaminationType
@@ -29,3 +31,28 @@ class ExaminationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Examination
         fields = "__all__"
+
+    def validate(self, attrs):
+        doctor = attrs.get("doctor")
+        examination_type = attrs.get("examination_type")
+        date = attrs.get("date")
+        time = attrs.get("time")
+
+        if doctor and examination_type and date:
+            conflict = Examination.objects.filter(
+                doctor=doctor,
+                examination_type=examination_type,
+                date=date,
+                time=time,
+                status=Status.ACTIVE
+            )
+
+            if self.instance:
+                conflict = conflict.exclude(pk=self.instance.pk)
+
+            if conflict.exists():
+                raise ValidationError({
+                    "date": f"The date {date} {time} is already taken for this doctor and examination type in existing examinations."
+                })
+
+        return attrs

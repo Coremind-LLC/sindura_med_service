@@ -22,6 +22,7 @@ class User(AbstractUser):
 
     class Meta:
         db_table = "user"
+        ordering = ["-id"]
         constraints = [
             models.UniqueConstraint(
                 fields=["phone", "status"], name="unique_phone_status"
