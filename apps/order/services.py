@@ -3,6 +3,7 @@ from datetime import timedelta, date
 
 from django.db.models import Q, Count, Sum
 from django.shortcuts import get_object_or_404
+from openpyxl import Workbook
 from rest_framework import serializers
 
 from apps.activity_log.enums import ActivityLogAction, ActivityLogModel
@@ -54,6 +55,49 @@ class OrderService:
                 )
             )
         )
+
+    @staticmethod
+    def export(start_date: date, end_date: date):
+        orders = Order.objects.filter(
+            stage__in=[OrderStage.CANCELLED, OrderStage.PAID],
+            status=Status.ACTIVE,
+            created_at__date__range=(start_date, end_date)
+        ).order_by("-id")
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Захиалга"
+
+        ws.append([
+            "ID",
+            "Овог",
+            "Нэр",
+            "Регистр",
+            "Утас",
+            "Тайлбар",
+            "Төлөв",
+            "Гараас үүсгэсэн эсэх",
+            "Буцаалт хийсэн эсэх",
+            "Үүсгэсэн огноо"
+            "Шинэчилсэн огноо"
+        ])
+
+        for order in orders:
+            ws.append([
+                order.id,
+                order.last_name,
+                order.first_name,
+                order.register,
+                order.phone,
+                order.reason,
+                "Цуцалсан" if order.stage == OrderStage.CANCELLED else "Төлөгдсөн" if order.stage == OrderStage.PAID else "",
+                "Тийм" if order.is_manual is True else "Үгүй" if order.is_manual is False else "",
+                "Тийм" if order.is_refund is True else "Үгүй" if order.is_refund is False else "",
+                order.created_at.strftime("%Y-%m-%d %H:%M") if order.created_at else "",
+                order.updated_at.strftime("%Y-%m-%d %H:%M") if order.updated_at else ""
+            ])
+
+        return wb
 
     @staticmethod
     def create(data: dict, request):

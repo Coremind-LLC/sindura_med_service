@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.db import transaction
 from django.db.models import Sum, F
+from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed
@@ -30,6 +31,38 @@ class OrderViewSet(BaseViewSet):
             return OrderService.search(search)
 
         return OrderService.get_all()
+
+    @action(detail=False, methods=["get"], url_path="export")
+    def export(self, request):
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        if not start_date or not end_date:
+            return Response(
+                {"message": "start_date and end_date are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+        except ValueError:
+            return Response(
+                {"message": "Date format must be YYYY-MM-DD"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        workbook = OrderService.export(start_date, end_date)
+
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="orders_{start_date}_{end_date}.xlsx"'
+        )
+
+        workbook.save(response)
+        return response
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -81,8 +114,7 @@ class OrderViewSet(BaseViewSet):
 
         return Response({"results": response})
 
-    def destroy(self, request, *args, **kwargs):
-        raise MethodNotAllowed("DELETE", detail="Delete is disabled for order")
+
 
     def create(self, request, *args, **kwargs):
         order = OrderService.create(
@@ -127,3 +159,6 @@ class OrderViewSet(BaseViewSet):
         ExaminationService.unlock(order.examination_id)
 
         return Response({"message": "Order cancelled"})
+
+    def destroy(self, request, *args, **kwargs):
+        raise MethodNotAllowed("DELETE", detail="Delete is disabled for order")
