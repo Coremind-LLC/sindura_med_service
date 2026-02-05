@@ -21,10 +21,12 @@ djangorestframework==3.16.1
 djangorestframework-camel-case==1.4.2
 djangorestframework-stubs==3.16.6
 drf-yasg==1.21.11
+et_xmlfile==2.0.0
 idna==3.11
 inflection==0.5.1
 kombu==5.6.2
 mypy_extensions==1.1.0
+openpyxl==3.1.5
 packaging==25.0
 pathspec==1.0.2
 platformdirs==4.5.1
