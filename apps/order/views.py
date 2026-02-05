@@ -32,7 +32,7 @@ class OrderViewSet(BaseViewSet):
         return OrderService.get_all()
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
+        queryset = self.filter_queryset(self.get_queryset())
 
         totals = queryset.aggregate(
             total_amount_sum=Sum(F("examination__total_amount")),
