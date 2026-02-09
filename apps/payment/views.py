@@ -55,7 +55,7 @@ class PaymentViewSet(ViewSet):
 
         try:
             invoice = InvoiceService.approve(invoice.id)
-            OrderService.approve(invoice.order.id, None, True)
+            OrderService.approve(invoice.order.id, None, None, True)
         except Exception as e:
             logger.error(f"Failed to approve invoice/order {invoice.id}: {e}")
             return Response({"message": f"Failed to approve invoice/order: {e}"}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
@@ -91,7 +91,7 @@ class PaymentViewSet(ViewSet):
 
         try:
             InvoiceService.approve(invoice.id)
-            OrderService.approve(invoice.order.id, None, True)
+            OrderService.approve(invoice.order.id, None, None, True)
         except Exception as e:
             logger.error(f"Failed to approve invoice/order {invoice.id}: {e}")
             return Response({"message": f"Failed to approve invoice/order: {e}"}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
