@@ -96,6 +96,6 @@ class PaymentViewSet(ViewSet):
             logger.error(f"Failed to approve invoice/order {invoice.id}: {e}")
             return Response({"message": f"Failed to approve invoice/order: {e}"}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
-        CallProService.send(invoice.order.phone, f"Таны захиалга баталгаажлаа. Үзлэгийн огноо: {invoice.order.examination.date}. Үзлэгийг төрөл: {invoice.order.examination.examination_type.name}. Үзлэг хийх өрөө: {invoice.order.examination.room}. Синдура мед.")
+        CallProService.send(invoice.order.phone, f"Таны {invoice.order.examination.date} өдрийн захиалга баталгаажлаа. Үзлэгийн дэлгэрэнгүй: {invoice.order.examination.examination_type.name} | {invoice.order.examination.room} өрөө. Синдура мед.")
 
         return Response({"message": "Төлбөр амжилттай төлөгдлөө", "status": "paid"}, status=HTTPStatus.OK)
