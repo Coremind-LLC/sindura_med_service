@@ -13,14 +13,12 @@ class ExaminationPackViewSet(BaseViewSet):
     serializer_class = ExaminationPackSerializer
 
     def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
         dates = request.query_params.getlist("dates")
 
-        try:
-            queryset = ExaminationPackService.search_by_dates(dates)
-        except ValueError:
-            return Response(
-                {"message": "Dates must be in YYYY-MM-DD format"},
-                status=status.HTTP_400_BAD_REQUEST,
+        if dates:
+            queryset = ExaminationPackService.search_by_dates(
+                dates, queryset=queryset
             )
 
         page = self.paginate_queryset(queryset)

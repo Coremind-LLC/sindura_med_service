@@ -21,11 +21,18 @@ class ExaminationPackService:
         return serializer.data
 
     @staticmethod
-    def search_by_dates(dates: list[str] | None = None):
-        queryset = ExaminationPack.objects.filter(status=Status.ACTIVE)
+    def search_by_dates(dates: list[str], queryset=None):
+        if queryset is None:
+            queryset = ExaminationPack.objects.all()
+
+        queryset = queryset.filter(status=Status.ACTIVE)
 
         if dates:
-            search_dates = [date.fromisoformat(d) for d in dates]
+            try:
+                search_dates = [date.fromisoformat(d) for d in dates]
+            except ValueError:
+                raise ValueError("Invalid date format")
+
             queryset = queryset.filter(dates__overlap=search_dates)
 
         return queryset
