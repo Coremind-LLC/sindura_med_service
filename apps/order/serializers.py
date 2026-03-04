@@ -44,10 +44,8 @@ class OrderSerializer(serializers.ModelSerializer):
         if examination.is_lock:
             raise serializers.ValidationError({"examination": "Examination already locked"})
 
-        if request and not request.user:
+        if request and request.user.is_authenticated:
             validated_data["created_by"] = request.user
-        else:
-            validated_data["created_by"] = None
 
         order = super().create(validated_data)
 
