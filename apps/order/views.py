@@ -138,10 +138,11 @@ class OrderViewSet(BaseViewSet):
         )
 
     def update(self, request, pk=None, *args, **kwargs):
-        order = OrderService.update(pk, request.data)
+        user = request.user if request.user.is_authenticated else None
+        order = OrderService.update(pk, request.data, user)
         return Response(
             self.get_serializer(order).data,
-            status=status.HTTP_201_CREATED
+            status=status.HTTP_202_ACCEPTED
         )
 
     @action(detail=True, methods=["patch"], url_path="approve")

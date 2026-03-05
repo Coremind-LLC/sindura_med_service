@@ -141,7 +141,7 @@ class OrderService:
         return order
 
     @staticmethod
-    def update(id: int, data: dict):
+    def update(id: int, data: dict, user: User | None):
         instance = get_object_or_404(Order, pk=id)
 
         examination = ExaminationService.get_by_id(data["examination"])
@@ -153,6 +153,13 @@ class OrderService:
             ExaminationService.lock(data["examination"])
             ExaminationService.unlock(instance.examination.id)
 
+        update_fields = ["first_name", "last_name", "phone", "register", "reason", "is_refund", "examination",
+                         "updated_at"]
+
+        if user is not None:
+            instance.updated_by = user
+            update_fields += ["updated_by"]
+
         instance.first_name = data["first_name"]
         instance.last_name = data["last_name"]
         instance.phone = data["phone"]
@@ -161,7 +168,7 @@ class OrderService:
         instance.is_refund = data["is_refund"]
         instance.examination = examination
         instance.updated_at = timezone.now()
-        instance.save(update_fields=["first_name", "last_name", "phone", "register", "reason", "is_refund", "examination", "updated_at"])
+        instance.save(update_fields=update_fields)
 
         ActivityLogService.create(ActivityLogAction.UPDATE,
                                   ActivityLogModel.ORDER,
