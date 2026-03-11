@@ -16,7 +16,7 @@ class ActivityLogService:
                description: str = "",
                body: Optional[dict] = None,
                user: Optional[User] = None) -> ActivityLog:
-        if user is not None and not isinstance(user, User):
+        if not isinstance(user, User):
             user = None
 
         return ActivityLog.objects.create(
@@ -25,5 +25,7 @@ class ActivityLogService:
             object_id=object_id,
             description=description,
             body=body,
-            user=user
+            user=user,
+            user_first_name=user.first_name if user else None,
+            user_last_name=user.last_name if user else None
         )
