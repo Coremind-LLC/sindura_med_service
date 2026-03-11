@@ -11,6 +11,8 @@ class ActivityLog(BaseModel):
     description = models.TextField(null=True, blank=True)
     body = models.JSONField(null=True, blank=True)
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    user_first_name = models.CharField(max_length=100, null=True, blank=True)
+    user_last_name = models.CharField(max_length=100, null=True, blank=True)
 
     class Meta:
         db_table = "activity_log"
