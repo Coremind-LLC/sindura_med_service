@@ -4,6 +4,8 @@ from django.db import models
 class ActivityLogAction(models.TextChoices):
     CREATE = "CREATE", "Create"
     UPDATE = "UPDATE", "Update"
+    APPROVE = "APPROVE", "Approve"
+    CANCEL = "CANCEL", "Cancel"
     DELETE = "DELETE", "Delete"
 
 class ActivityLogModel(models.TextChoices):

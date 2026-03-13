@@ -213,7 +213,7 @@ class OrderService:
         instance.updated_by = user
         instance.save(update_fields=update_fields)
 
-        ActivityLogService.create(ActivityLogAction.UPDATE,
+        ActivityLogService.create(ActivityLogAction.APPROVE,
                                   ActivityLogModel.ORDER,
                                   instance.id,
                                   "Order approved",
@@ -245,7 +245,7 @@ class OrderService:
         instance.updated_at = timezone.now()
         instance.save(update_fields=update_fields)
 
-        ActivityLogService.create(ActivityLogAction.UPDATE,
+        ActivityLogService.create(ActivityLogAction.CANCEL,
                                   ActivityLogModel.ORDER,
                                   instance.id,
                                   f"Order cancelled",
