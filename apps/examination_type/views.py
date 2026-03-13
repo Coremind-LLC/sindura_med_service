@@ -1,4 +1,5 @@
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -44,3 +45,21 @@ class ExaminationTypeViewSet(BaseViewSet):
                 {"message": e.detail.get("message", "Cannot delete examination type.")},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    def archive(self, request, pk=None):
+        """Archive an examination type"""
+        examination_type = self.get_object()
+        examination_type.archived = True
+        examination_type.save()
+        serializer = self.get_serializer(examination_type)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    def unarchive(self, request, pk=None):
+        """Unarchive an examination type"""
+        examination_type = self.get_object()
+        examination_type.archived = False
+        examination_type.save()
+        serializer = self.get_serializer(examination_type)
+        return Response(serializer.data, status=status.HTTP_200_OK)
