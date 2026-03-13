@@ -20,6 +20,19 @@ class ExaminationTypeViewSet(BaseViewSet):
             return [AllowAny()]
         return [IsAuthenticated()]
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Check for archived query parameter
+        archived_param = self.request.query_params.get('archived', None)
+        
+        if archived_param is not None:
+            # If archived param is provided, filter based on its value
+            is_archived = archived_param.lower() == 'true'
+            queryset = ExaminationType.objects.filter(archived=is_archived)
+        
+        return queryset
+
     def destroy(self, request, *args, **kwargs):
         pk = self.get_object().id
         user = request.user
