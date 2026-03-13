@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
     "rest_framework.authtoken",
+    "django_filters",
     "django.contrib.postgres",
     "apps.examination",
     "apps.examination_pack",

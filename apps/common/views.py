@@ -18,7 +18,9 @@ class BaseViewSet(viewsets.ModelViewSet):
 
         if self.action == "list":
             if hasattr(model, "status"):
-                return qs.filter(status=Status.ACTIVE)
+                qs = qs.filter(status=Status.ACTIVE)
+            if hasattr(model, "archived"):
+                qs = qs.filter(archived=False)
         return qs
 
     def perform_create(self, serializer):
