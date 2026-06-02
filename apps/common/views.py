@@ -1,9 +1,11 @@
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
+from rest_framework.exceptions import ValidationError
 
 from apps.common.enums import Status
 from apps.common.filters import BaseFilter
+from apps.examination.models import Examination
 
 
 class BaseViewSet(viewsets.ModelViewSet):
@@ -50,6 +52,10 @@ class BaseViewSet(viewsets.ModelViewSet):
         serializer.save(**extra)
 
     def perform_destroy(self, instance):
+        model = self.queryset.model
+        if model is Examination or (isinstance(model, type) and issubclass(model, Examination)):
+            if getattr(instance, "is_lock", False):
+                raise ValidationError({"message": "Түгжээтэй үзлэгийг устгах боломжгүй"})
         if hasattr(instance, "updated_by"):
             instance.updated_by = self.request.user
         if hasattr(instance, "updated_at"):
