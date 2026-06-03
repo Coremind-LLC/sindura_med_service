@@ -6,6 +6,8 @@ from rest_framework.exceptions import ValidationError
 from apps.common.enums import Status
 from apps.common.filters import BaseFilter
 from apps.examination.models import Examination
+from apps.order.services import OrderService
+from apps.order.enums import OrderStage
 
 
 class BaseViewSet(viewsets.ModelViewSet):
@@ -52,10 +54,20 @@ class BaseViewSet(viewsets.ModelViewSet):
         serializer.save(**extra)
 
     def perform_destroy(self, instance):
+        """Төлбөр төлөгдсөн захиалгын үзлэгийг, түгжээгүй ч гэсэн устгах боломжгүй байх"""
         model = self.queryset.model
-        if model is Examination or (isinstance(model, type) and issubclass(model, Examination)):
+        if model is Examination or (
+            isinstance(model, type) and issubclass(model, Examination)
+        ):
             if getattr(instance, "is_lock", False):
-                raise ValidationError({"message": "Түгжээтэй үзлэгийг устгах боломжгүй"})
+                raise ValidationError(
+                    {"message": "Түгжээтэй үзлэгийг устгах боломжгүй"}
+                )
+        order = OrderService.get_by_examination(instance.id)
+        if order and order.stage == OrderStage.PAID:
+            raise ValidationError(
+                {"message": "Төлбөр төлсөн захиалга байна, үзлэгийг устгах боломжгүй"}
+            )
         if hasattr(instance, "updated_by"):
             instance.updated_by = self.request.user
         if hasattr(instance, "updated_at"):
