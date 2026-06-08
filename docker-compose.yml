@@ -2,6 +2,7 @@ services:
   web:
     image: ghcr.io/coremind-llc/sindura_med_service:prod
     container_name: sindura_med_service
+    restart: unless-stopped
     volumes:
       - .:/app
       - ./logs:/app/logs
@@ -21,6 +22,9 @@ services:
     depends_on:
       # - db
       - redis
+    labels:
+      - "wud.watch=true"
+      - "wud.trigger.include=docker.autopull"
 
   celery:
     build: .
