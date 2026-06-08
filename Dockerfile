@@ -1,7 +1,6 @@
 FROM python:3.12.12-slim-bookworm
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    TZ=Asia/Ulaanbaatar
+ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /app
 
@@ -11,7 +10,6 @@ RUN apt-get update \
     gnupg \
     dirmngr \
     curl \
-    tzdata \
     build-essential \
     libpq-dev \
     && apt-get clean \
