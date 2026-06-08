@@ -19,7 +19,7 @@ services:
       - CELERY_BROKER_URL=redis://${REDIS_HOST}:${REDIS_PORT}/0
       - CELERY_RESULT_BACKEND=redis://${REDIS_HOST}:${REDIS_PORT}/0
     depends_on:
-      - db
+      # - db
       - redis
 
   celery:
@@ -39,7 +39,7 @@ services:
       - CELERY_RESULT_BACKEND=redis://${REDIS_HOST}:${REDIS_PORT}/0
     depends_on:
       - redis
-      - db
+      # - db
 
   celery-beat:
     build: .
@@ -58,28 +58,28 @@ services:
       - CELERY_RESULT_BACKEND=redis://${REDIS_HOST}:${REDIS_PORT}/0
     depends_on:
       - redis
-      - db
+      # - db
 
-  db:
-    image: postgres:18.1-alpine3.23
-    container_name: db
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "5432:5432"
-    volumes:
-      - pg_data:/var/lib/postgresql/data
-      - ./postgres:/docker-entrypoint-initdb.d
-    command: >
-      sh -c "
-        docker-entrypoint.sh postgres &
-        until pg_isready -U ${DB_USER}; do sleep 1; done;
-        psql -U ${DB_USER} -tc \"SELECT 1 FROM pg_database WHERE datname = '${DB_NAME}'\" | grep -q 1 || \
-        psql -U ${DB_USER} -c \"CREATE DATABASE ${DB_NAME}\";
-        wait
-      "
+  # db:
+  #   image: postgres:18.1-alpine3.23
+  #   container_name: db
+  #   environment:
+  #     POSTGRES_DB: ${DB_NAME}
+  #     POSTGRES_USER: ${DB_USER}
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD}
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - pg_data:/var/lib/postgresql/data
+  #     - ./postgres:/docker-entrypoint-initdb.d
+  #   command: >
+  #     sh -c "
+  #       docker-entrypoint.sh postgres &
+  #       until pg_isready -U ${DB_USER}; do sleep 1; done;
+  #       psql -U ${DB_USER} -tc \"SELECT 1 FROM pg_database WHERE datname = '${DB_NAME}'\" | grep -q 1 || \
+  #       psql -U ${DB_USER} -c \"CREATE DATABASE ${DB_NAME}\";
+  #       wait
+  #     "
 
   redis:
     image: redis:7.4.3-alpine
