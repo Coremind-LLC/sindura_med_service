@@ -17,12 +17,15 @@ RUN apt-get update \
 
 COPY requirements.txt /app/
 
-RUN python3 -m venv /venv
-RUN /venv/bin/pip install --upgrade pip
-RUN /venv/bin/pip install --no-cache-dir -r /app/requirements.txt
+RUN pip install --upgrade pip \
+    && pip install -r /app/requirements.txt
 
-ENV PATH="/venv/bin:$PATH"
+COPY . .
 
-COPY . /app/
-
-CMD ["/venv/bin/python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["sh", "-c", \
+    "python manage.py migrate --noinput && \
+    python manage.py collectstatic --noinput && \
+    python manage.py crontab remove; \
+    python manage.py crontab add && \
+    service cron start && \
+    exec gunicorn --bind 0.0.0.0:${PORT:-8000} --workers ${WORKER_COUNT:-9} --worker-class gthread --threads ${THREAD_COUNT:-4} --timeout 120 ${APPLICATION:-config.wsgi:application}"]
