@@ -1,5 +1,6 @@
 from django.db import transaction
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from apps.common.views import BaseViewSet
@@ -12,14 +13,17 @@ class ExaminationPackViewSet(BaseViewSet):
     queryset = ExaminationPack.objects.all()
     serializer_class = ExaminationPackSerializer
 
-    def list(self, request, *args, **kwargs):
+    def list(self, request, *args, **kwargs) -> Response:
         queryset = self.filter_queryset(self.get_queryset())
         dates = request.query_params.getlist("dates")
 
         if dates:
-            queryset = ExaminationPackService.search_by_dates(
-                dates, queryset=queryset
-            )
+            try:
+                queryset = ExaminationPackService.search_by_dates(
+                    dates, queryset=queryset
+                )
+            except ValueError as err:
+                raise ValidationError({"dates": [str(err)]}) from err
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -30,7 +34,7 @@ class ExaminationPackViewSet(BaseViewSet):
         return Response(serializer.data)
 
     @transaction.atomic
-    def destroy(self, request, *args, **kwargs):
+    def destroy(self, request, *args, **kwargs) -> Response:
         instance = self.get_object()
 
         if ExaminationService.has_locked_by_examination_pack(instance.id):

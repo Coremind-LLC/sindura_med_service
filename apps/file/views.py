@@ -1,3 +1,4 @@
+import logging
 import os
 import uuid
 from rest_framework import status
@@ -6,7 +7,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
-from config import settings
+from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 ALLOWED_IMAGE_EXTENSIONS = {
     ".jpg",
@@ -25,7 +28,7 @@ class FileViewSet(ViewSet):
     permission_classes = [IsAuthenticated]
 
     @action(detail=False, methods=["post"], url_path="image")
-    def upload_image(self, request):
+    def upload_image(self, request) -> Response:
         try:
             image = request.FILES.get("image")
             if not image:
@@ -59,13 +62,14 @@ class FileViewSet(ViewSet):
                 status=status.HTTP_201_CREATED,
             )
         except Exception as e:
+            logger.exception("Failed upload image")
             return Response(
                 {"message": f"Failed upload image: {e}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
     @action(detail=False, methods=["post"], url_path="images")
-    def upload_images(self, request):
+    def upload_images(self, request) -> Response:
         try:
             images = request.FILES.getlist("images")
             if not images:
@@ -88,7 +92,7 @@ class FileViewSet(ViewSet):
             saved_files = []
 
             for image in images:
-                original_extension = os.path.splitext(image.name)[1]
+                original_extension = os.path.splitext(image.name)[1].lower()
                 filename = f"{uuid.uuid4().hex}{original_extension}"
                 upload_path = os.path.join(upload_directory, filename)
 
@@ -106,6 +110,7 @@ class FileViewSet(ViewSet):
             return Response(saved_files, status=status.HTTP_201_CREATED)
 
         except Exception as e:
+            logger.exception("Failed upload images")
             return Response(
                 {"message": f"Failed upload images: {e}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -116,7 +121,7 @@ class FileViewSet(ViewSet):
         methods=["delete"],
         url_path=r"image/(?P<filename>[a-zA-Z0-9_\-\.]+)",
     )
-    def delete_image(self, request, filename=None):
+    def delete_image(self, request, filename=None) -> Response:
         if not filename:
             return Response(
                 {"message": "Filename is required"}, status=status.HTTP_400_BAD_REQUEST
@@ -141,6 +146,7 @@ class FileViewSet(ViewSet):
                 status=status.HTTP_204_NO_CONTENT,
             )
         except Exception as e:
+            logger.exception("Failed to delete image")
             return Response(
                 {"message": f"Failed to delete image: {e}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,

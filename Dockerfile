@@ -23,6 +23,10 @@ RUN /venv/bin/pip install --no-cache-dir -r /app/requirements.txt
 
 ENV PATH="/venv/bin:$PATH"
 
-COPY . /app/
+RUN useradd --create-home --uid 1000 app && chown app:app /app
+
+COPY --chown=app:app . /app/
+
+USER app
 
 CMD ["/venv/bin/python", "manage.py", "runserver", "0.0.0.0:8000"]

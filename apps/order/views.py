@@ -1,31 +1,56 @@
 from datetime import datetime
+from typing import NoReturn
 
 from django.db import transaction
-from django.db.models import Sum, F
+from django.db.models import Sum, F, QuerySet
 from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, BasePermission, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
+from rest_framework.throttling import BaseThrottle, ScopedRateThrottle
 
 from apps.common.views import BaseViewSet
 from apps.examination.services import ExaminationService
 from apps.order.models import Order
-from apps.order.serializers import OrderSerializer
+from apps.order.serializers import OrderPublicSerializer, OrderSerializer
 from apps.order.services import OrderService
 
 class OrderViewSet(BaseViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
 
-    def get_permissions(self):
-        if self.action in ["create", "list"]:
+    def is_public_lookup(self) -> bool:
+        """Anonymous "my orders" page: list of paid orders by exact phone or register."""
+        return self.action == "list" and not self.request.user.is_authenticated
+
+    def get_permissions(self) -> list[BasePermission]:
+        # Anonymous patients may book (create) and look up their own paid orders (list, limited
+        # fields). Everything else needs a logged-in staff account, as before.
+        if self.action == "create" or self.is_public_lookup():
             return [AllowAny()]
         return [IsAuthenticated()]
 
-    def get_queryset(self):
+    def get_throttles(self) -> list[BaseThrottle]:
+        if self.is_public_lookup():
+            self.throttle_scope = "order_lookup"
+            return [ScopedRateThrottle()]
+        return super().get_throttles()
+
+    def get_serializer_class(self) -> type[BaseSerializer]:
+        if self.is_public_lookup():
+            return OrderPublicSerializer
+        return super().get_serializer_class()
+
+    def get_queryset(self) -> QuerySet[Order]:
         search = self.request.query_params.get("search", "").strip()
+
+        if self.is_public_lookup():
+            if not search:
+                return Order.objects.none()
+            return OrderService.lookup_paid(search)
 
         if search:
             return OrderService.search(search)
@@ -33,7 +58,7 @@ class OrderViewSet(BaseViewSet):
         return OrderService.get_all()
 
     @action(detail=False, methods=["get"], url_path="export")
-    def export(self, request):
+    def export(self, request) -> Response | HttpResponse:
         start_date = request.query_params.get("start_date")
         end_date = request.query_params.get("end_date")
 
@@ -64,7 +89,7 @@ class OrderViewSet(BaseViewSet):
         workbook.save(response)
         return response
 
-    def list(self, request, *args, **kwargs):
+    def list(self, request, *args, **kwargs) -> Response:
         queryset = self.filter_queryset(self.get_queryset())
 
         totals = queryset.aggregate(
@@ -91,7 +116,7 @@ class OrderViewSet(BaseViewSet):
         })
 
     @action(detail=False, methods=["get"], url_path="report")
-    def report(self, request):
+    def report(self, request) -> Response:
         start_date_str = self.request.query_params.get("start_date")
         end_date_str = self.request.query_params.get("end_date")
 
@@ -116,7 +141,7 @@ class OrderViewSet(BaseViewSet):
 
 
 
-    def create(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs) -> Response:
         order = OrderService.create(
             data=request.data,
             request=request
@@ -127,7 +152,7 @@ class OrderViewSet(BaseViewSet):
         )
 
     @action(detail=False, methods=["post"], url_path="manual")
-    def manual(self, request):
+    def manual(self, request) -> Response:
         order = OrderService.create_manual(
             data=request.data,
             request=request
@@ -137,7 +162,7 @@ class OrderViewSet(BaseViewSet):
             status=status.HTTP_201_CREATED
         )
 
-    def update(self, request, pk=None, *args, **kwargs):
+    def update(self, request, pk=None, *args, **kwargs) -> Response:
         user = request.user if request.user.is_authenticated else None
         order = OrderService.update(pk, request.data, user)
         return Response(
@@ -147,7 +172,7 @@ class OrderViewSet(BaseViewSet):
 
     @action(detail=True, methods=["patch"], url_path="approve")
     @transaction.atomic
-    def approve(self, request, pk=None):
+    def approve(self, request, pk=None) -> Response:
         order = OrderService.approve(pk, request.data, request.user, False)
         ExaminationService.lock(order.examination_id)
 
@@ -155,11 +180,12 @@ class OrderViewSet(BaseViewSet):
 
     @action(detail=True, methods=["patch"], url_path="cancel")
     @transaction.atomic
-    def cancel(self, request, pk=None):
+    def cancel(self, request, pk=None) -> Response:
         order = OrderService.cancel(pk, request.data, request.user, False)
-        ExaminationService.unlock(order.examination_id)
+        if order.examination_id:
+            ExaminationService.unlock(order.examination_id)
 
         return Response({"message": "Order cancelled"})
 
-    def destroy(self, request, *args, **kwargs):
+    def destroy(self, request, *args, **kwargs) -> NoReturn:
         raise MethodNotAllowed("DELETE", detail="Delete is disabled for order")

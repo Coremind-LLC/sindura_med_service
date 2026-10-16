@@ -1,6 +1,8 @@
+from datetime import date
+
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, BasePermission, IsAuthenticated
 from rest_framework.response import Response
 
 from apps.common.views import BaseViewSet
@@ -12,13 +14,13 @@ class ExaminationViewSet(BaseViewSet):
     queryset = Examination.objects.all()
     serializer_class = ExaminationSerializer
 
-    def get_permissions(self):
+    def get_permissions(self) -> list[BasePermission]:
         if self.action in ["list", "retrieve", "get_available"]:
             return [AllowAny()]
         return [IsAuthenticated()]
 
     @action(detail=False, methods=["get"], url_path="available")
-    def get_available(self, request):
+    def get_available(self, request) -> Response:
         date_param = request.query_params.get("date")
         examination_type_param = request.query_params.get("examination_type")
 
@@ -30,9 +32,15 @@ class ExaminationViewSet(BaseViewSet):
 
         try:
             year, month = map(int, date_param.split("-"))
-        except Exception:
-            raise ValidationError({"message": "Invalid format. Use YYYY-MM"})
+            date(year, month, 1)
+        except ValueError:
+            raise ValidationError({"message": "Invalid format. Use YYYY-MM"}) from None
 
-        examinations = ExaminationService.get_by_date_and_examination_type(year, month, examination_type_param)
+        if not examination_type_param.isdigit():
+            raise ValidationError({"message": "Examination type must be an integer id"})
+
+        examinations = ExaminationService.get_by_date_and_examination_type(
+            year, month, int(examination_type_param)
+        )
 
         return Response(examinations)

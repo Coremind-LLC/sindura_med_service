@@ -5,7 +5,7 @@ from apps.common.models import BaseModel
 
 class ExaminationType(BaseModel):
     name = models.CharField(max_length=255, validators=[MinLengthValidator(2)])
-    icon = models.CharField(max_length=255, null=True, blank=True)
+    icon = models.CharField(max_length=255, blank=True, default="")
     archived = models.BooleanField(default=False)
 
 

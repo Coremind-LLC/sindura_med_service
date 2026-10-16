@@ -1,8 +1,9 @@
 import logging
-from dataclasses import asdict
+from dataclasses import asdict, fields
 from decimal import Decimal
 
 import requests
+from django.conf import settings
 from requests.auth import HTTPBasicAuth
 from rest_framework import status
 
@@ -21,11 +22,18 @@ from helpers.number_helper import NumberHelper
 
 logger = logging.getLogger(__name__)
 
+_PAYMENT_RESPONSE_FIELDS = frozenset(field.name for field in fields(PaymentResponse))
+
+
+def _payment_response(raw: dict) -> PaymentResponse:
+    """Build a PaymentResponse, ignoring keys QPay sends that the dataclass does not model."""
+    return PaymentResponse(**{key: value for key, value in raw.items() if key in _PAYMENT_RESPONSE_FIELDS})
+
 
 class QPayService:
 
     @staticmethod
-    def login():
+    def login() -> tuple[str | None, str | None]:
         try:
             response = requests.post(
                 f"{env("QPAY_HOST")}/v2/auth/token",
@@ -43,11 +51,11 @@ class QPayService:
 
             return login_response.access_token, None
         except Exception as e:
-            logger.error(e)
+            logger.exception(e)
             return None, str(e)
 
     @staticmethod
-    def create_invoice(amount: Decimal, phone: str):
+    def create_invoice(amount: Decimal, phone: str) -> tuple[InvoiceResponse | None, str | None]:
         data = InvoiceRequest(
             invoice_code=env("QPAY_INVOICE_CODE"),
             sender_invoice_no=str(NumberHelper.get_random_number(8)),
@@ -55,7 +63,7 @@ class QPayService:
             invoice_description=phone,
             sender_branch_code="01",
             amount=amount,
-            callback_url=f"{env("HOST")}/payments",
+            callback_url=f"{settings.API_HOST}/payments/get_payment/",
         )
 
         data_dict = asdict(data)
@@ -86,11 +94,11 @@ class QPayService:
             return invoice_response, None
 
         except Exception as e:
-            logger.error(e)
+            logger.exception(e)
             return None, str(e)
 
     @staticmethod
-    def check_payment(invoice_id: str):
+    def check_payment(invoice_id: str) -> tuple[PaymentPageResponse | None, str | None]:
         data = PaymentRequest(
             object_type=PaymentObjectType.INVOICE,
             object_id=invoice_id,
@@ -125,17 +133,17 @@ class QPayService:
 
             payment_page_response = PaymentPageResponse(
                 count=data["count"],
-                rows=[PaymentResponse(**row) for row in data["rows"]],
+                rows=[_payment_response(row) for row in data["rows"]],
                 paid_amount=data.get("paid_amount"),
             )
 
             return payment_page_response, None
         except Exception as e:
-            logger.error(e)
+            logger.exception(e)
             return None, str(e)
 
     @staticmethod
-    def get_payment(payment_id: str):
+    def get_payment(payment_id: str) -> tuple[PaymentResponse | None, str | None]:
         token, error = QPayService.login()
         if error:
             logger.error(error)
@@ -156,8 +164,8 @@ class QPayService:
             if response.status_code != status.HTTP_200_OK:
                 return None, response.json().get("message")
 
-            payment_response = PaymentResponse(**response.json())
+            payment_response = _payment_response(response.json())
             return payment_response, None
         except Exception as e:
-            logger.error(e)
+            logger.exception(e)
             return None, str(e)

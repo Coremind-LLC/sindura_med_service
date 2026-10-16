@@ -7,8 +7,8 @@ class Doctor(BaseModel):
     first_name = models.CharField(max_length=32, validators=[MinLengthValidator(2)])
     last_name = models.CharField(max_length=32, validators=[MinLengthValidator(2)])
     position = models.CharField(max_length=255, validators=[MinLengthValidator(2)])
-    image = models.CharField(max_length=255, null=True, blank=True)
-    email = models.EmailField(null=True, blank=True)
+    image = models.CharField(max_length=255, blank=True, default="")
+    email = models.EmailField(blank=True, default="")
 
     class Meta:
         db_table = "doctor"

@@ -19,7 +19,7 @@ class Examination(BaseModel):
     is_lock = models.BooleanField(null=True, blank=True, default=False)
     deposit_amount = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
     total_amount = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
-    room = models.CharField(max_length=32, null=True, blank=True)
+    room = models.CharField(max_length=32, blank=True, default="")
 
     class Meta:
         db_table = "examination"

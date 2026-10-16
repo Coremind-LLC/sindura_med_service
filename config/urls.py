@@ -1,6 +1,6 @@
 from django.conf import settings
-from django.conf.urls.static import static
-from django.urls import path, include
+from django.urls import path, include, re_path
+from django.views.static import serve
 
 from rest_framework.routers import DefaultRouter
 from rest_framework.permissions import AllowAny
@@ -15,6 +15,7 @@ from apps.examination.views import ExaminationViewSet
 from apps.examination_pack.views import ExaminationPackViewSet
 from apps.examination_type.views import ExaminationTypeViewSet
 from apps.file.views import FileViewSet
+from apps.invoice.views import InvoiceViewSet
 from apps.order.views import OrderViewSet
 from apps.payment.views import PaymentViewSet
 from apps.user.views import UserViewSet
@@ -37,6 +38,7 @@ router.register(r"examinations", ExaminationViewSet)
 router.register(r"examination-packs", ExaminationPackViewSet)
 router.register(r"examination-types", ExaminationTypeViewSet)
 router.register(r"orders", OrderViewSet)
+router.register(r"invoices", InvoiceViewSet)
 router.register(r"activity-logs", ActivityLogViewSet)
 router.register(r"payments", PaymentViewSet, basename="payment")
 router.register(r"files", FileViewSet, basename="file")
@@ -48,5 +50,8 @@ urlpatterns = [
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0)),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Uploaded images (doctor photos, type icons) are served by Django unless a proxy does it.
+if settings.DEBUG or settings.SERVE_MEDIA:
+    urlpatterns += [
+        re_path(rf"^{settings.MEDIA_URL.lstrip('/')}(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
+    ]

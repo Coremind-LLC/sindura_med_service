@@ -1,12 +1,16 @@
+import logging
+
 import requests
 from rest_framework import status
 
 from config.settings import env
 
+logger = logging.getLogger(__name__)
+
 
 class CallProService:
     @staticmethod
-    def send(to, text):
+    def send(to, text) -> tuple[None, str | None]:
         data = {
             "key": env("CALL_PRO_KEY"),
             "from": env("CALL_PRO_FROM"),
@@ -22,4 +26,5 @@ class CallProService:
 
             return None, None
         except Exception as e:
+            logger.exception("Failed to send CallPro SMS")
             return None, str(e)

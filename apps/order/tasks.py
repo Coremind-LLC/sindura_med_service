@@ -4,6 +4,7 @@ from django.utils import timezone
 from celery import shared_task
 from .enums import OrderStage
 from .models import Order
+from .transitions import OrderTransitionService
 from apps.examination.services import ExaminationService
 from ..invoice.services import InvoiceService
 
@@ -14,10 +15,9 @@ logger = logging.getLogger(__name__)
     autoretry_for=(Exception,),
     retry_kwargs={"max_retries": 5},
 )
-def check_order_stage(order_id, invoice_id):
-    from .services import OrderService
+def check_order_stage(order_id: int, invoice_id: int) -> None:
     try:
-        order = OrderService.get_by_id(order_id)
+        order = OrderTransitionService.get_by_id(order_id)
 
         if order.stage in (OrderStage.PAID, OrderStage.CANCELLED):
             return
@@ -26,7 +26,7 @@ def check_order_stage(order_id, invoice_id):
             return
 
         InvoiceService.cancel(invoice_id)
-        OrderService.cancel(order_id, None, None, True)
+        OrderTransitionService.cancel(order_id, None, None, True)
         ExaminationService.unlock(order.examination.id)
 
         logger.info(f"Order {order.id} expired and cancelled successfully.")

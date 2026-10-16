@@ -11,6 +11,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.viewsets import ViewSet
 from apps.auth.serializers import (
     AuthLoginSerializer,
@@ -19,14 +20,39 @@ from apps.auth.serializers import (
     AuthConfirmOTPSerializer,
 )
 from apps.third_party.call_pro.services import CallProService
+from apps.user.models import User
 from apps.user.services import UserService
 from helpers.number_helper import NumberHelper
 from helpers.validator_helper import ValidatorHelper
 
 
+def _is_phone_or_email(username) -> bool:
+    return ValidatorHelper.is_valid_phone(username) or ValidatorHelper.is_valid_email(
+        username
+    )
+
+
+def _lookup_user(username, not_found_message) -> tuple[User | None, Response | None]:
+    """Find the active user for a phone/email username, or the error response to return."""
+    user, error = UserService.get_by_username(username)
+    if error:
+        return None, Response(
+            {"message": f"Failed to find user: {error}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+    if user is None:
+        return None, Response(
+            {"message": not_found_message}, status=status.HTTP_400_BAD_REQUEST
+        )
+    return user, None
+
+
 class AuthViewSet(ViewSet):
     authentication_classes = [TokenAuthentication]
     permission_classes = [AllowAny]
+    # Login and OTP endpoints are brute-force targets: limit requests per client IP.
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth"
 
     @swagger_auto_schema(
         method="post",
@@ -34,7 +60,7 @@ class AuthViewSet(ViewSet):
         responses={200: openapi.Response("Token")},
     )
     @action(detail=False, methods=["post"], url_path="login")
-    def login(self, request):
+    def login(self, request) -> Response:
         username = request.data.get("username")
         password = request.data.get("password")
 
@@ -49,15 +75,10 @@ class AuthViewSet(ViewSet):
                 {"message": "Нууц үг оруулна уу"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        if (
-            not ValidatorHelper.is_valid_phone(username)
-            and not ValidatorHelper.is_valid_email(username)
-            and not ValidatorHelper.is_valid_register(username)
-        ):
+        # AuthBackend only resolves users by email or phone (User has no register field).
+        if not _is_phone_or_email(username):
             return Response(
-                {
-                    "message": "Буруу утас, имэйл эсвэл харилцагчийн регистр оруулсан байна"
-                },
+                {"message": "Буруу утас эсвэл имэйл оруулсан байна"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -80,7 +101,7 @@ class AuthViewSet(ViewSet):
         responses={200: openapi.Response("OTP sent")},
     )
     @action(detail=False, methods=["post"], url_path="forgot-password")
-    def forgot_password(self, request):
+    def forgot_password(self, request) -> Response:
         username = request.data.get("username")
 
         if not username:
@@ -89,41 +110,36 @@ class AuthViewSet(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if not ValidatorHelper.is_valid_phone(
-            username
-        ) and not ValidatorHelper.is_valid_email(username):
+        if not _is_phone_or_email(username):
             return Response(
                 {"message": "Буруу утас эсвэл имэйл оруулсан байна"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if not UserService.get_by_phone(username) and not UserService.get_by_email(
-            username
-        ):
-            return Response(
-                {"message": "Утас эсвэл имэйл дээр хэрэглэгч олдсонгүй"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        _, error_response = _lookup_user(
+            username, "Утас эсвэл имэйл дээр хэрэглэгч олдсонгүй"
+        )
+        if error_response:
+            return error_response
 
-        otp = str(NumberHelper.get_random_number(4))
-
-        cache_key = f"otp:{username}"
-        cache.set(cache_key, otp, timeout=300)
-
-        if ValidatorHelper.is_valid_phone(username):
-            _, error = CallProService.send(
-                to=username, text=f"Tanii batalgaajuulakh code: {otp}."
-            )
-            if error:
-                return Response(
-                    {"message": f"Failed to send OTP: {error}"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
-        if ValidatorHelper.is_valid_email(username):
+        if not ValidatorHelper.is_valid_phone(username):
             return Response(
                 {"message": "Email connection not ready"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        otp = str(NumberHelper.get_random_number(4))
+        _, error = CallProService.send(
+            to=username, text=f"Tanii batalgaajuulakh code: {otp}."
+        )
+        if error:
+            return Response(
+                {"message": f"Failed to send OTP: {error}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # Only store the code once it has actually been delivered.
+        cache.set(f"otp:{username}", otp, timeout=300)
 
         return Response({"message": "OTP sent"}, status=status.HTTP_200_OK)
 
@@ -133,7 +149,7 @@ class AuthViewSet(ViewSet):
         responses={200: openapi.Response("OTP sent")},
     )
     @action(detail=False, methods=["post"], url_path="confirm-otp")
-    def confirm_otp(self, request):
+    def confirm_otp(self, request) -> Response:
         username = request.data.get("username")
         otp = request.data.get("otp")
 
@@ -147,21 +163,15 @@ class AuthViewSet(ViewSet):
                 {"message": "OTP is required"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        if not ValidatorHelper.is_valid_phone(
-            username
-        ) and not ValidatorHelper.is_valid_email(username):
+        if not _is_phone_or_email(username):
             return Response(
                 {"message": "Invalid phone or email"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if not UserService.get_by_phone(username) and not UserService.get_by_email(
-            username
-        ):
-            return Response(
-                {"message": "Phone or email not found"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        _, error_response = _lookup_user(username, "Phone or email not found")
+        if error_response:
+            return error_response
 
         cache_key = f"otp:{username}"
         cached_otp = cache.get(cache_key)
@@ -190,7 +200,7 @@ class AuthViewSet(ViewSet):
         responses={200: openapi.Response("Password reset successfully")},
     )
     @action(detail=False, methods=["post"], url_path="recover-password")
-    def recover_password(self, request):
+    def recover_password(self, request) -> Response:
         username = request.data.get("username")
         secret = request.data.get("secret")
         new_password = request.data.get("new_password")
@@ -212,9 +222,7 @@ class AuthViewSet(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if not ValidatorHelper.is_valid_phone(
-            username
-        ) and not ValidatorHelper.is_valid_email(username):
+        if not _is_phone_or_email(username):
             return Response(
                 {"message": "Invalid phone or email"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -234,24 +242,9 @@ class AuthViewSet(ViewSet):
                 {"message": "Invalid secret."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        if not UserService.exist_by_phone(username) and not UserService.exist_by_email(
-            username
-        ):
-            return Response(
-                {"message": "Phone or email not found"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        user, error = UserService.get_by_phone(username)
-        if error:
-            return Response(
-                {"message": f"Failed to find user: {error}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-        if user is None:
-            return Response(
-                {"message": "User not found."}, status=status.HTTP_400_BAD_REQUEST
-            )
+        user, error_response = _lookup_user(username, "Phone or email not found")
+        if error_response:
+            return error_response
 
         user.set_password(new_password)
 

@@ -47,7 +47,7 @@ services:
     build: .
     container_name: sindura_med_celery_beat
     working_dir: /app
-    command: celery -A config beat -l info
+    command: celery -A config beat -l info -s /tmp/celerybeat-schedule
     volumes:
       - .:/app
     environment:

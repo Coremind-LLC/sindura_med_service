@@ -1,5 +1,5 @@
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, BasePermission, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 
@@ -14,12 +14,12 @@ class DoctorViewSet(BaseViewSet):
     queryset = Doctor.objects.all()
     serializer_class = DoctorSerializer
 
-    def get_permissions(self):
+    def get_permissions(self) -> list[BasePermission]:
         if self.action in ["list", "retrieve"]:
             return [AllowAny()]
         return [IsAuthenticated()]
 
-    def destroy(self, request, *args, **kwargs):
+    def destroy(self, request, *args, **kwargs) -> Response:
         pk = self.get_object().id
         user = request.user
 

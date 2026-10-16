@@ -1,7 +1,9 @@
 import logging
 
 from rest_framework import serializers
+from rest_framework.utils.serializer_helpers import ReturnDict, ReturnList
 from django.utils import timezone
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from apps.common.enums import Status
 from apps.invoice.enums import InvoiceStage
@@ -9,13 +11,14 @@ from apps.invoice.models import Invoice
 from apps.invoice.serializers import InvoiceSerializer
 from apps.order.models import Order
 from apps.third_party.qpay.services import QPayService
+from helpers.common_helper import CommonHelper
 
 logger = logging.getLogger(__name__)
 
 class InvoiceService:
 
     @staticmethod
-    def get_all():
+    def get_all() -> ReturnList:
         queryset = Invoice.objects.all()
         serializer = InvoiceSerializer(queryset, many=True)
         return serializer.data
@@ -23,18 +26,22 @@ class InvoiceService:
     @staticmethod
     def get_by_id(id: int) -> Invoice:
         return get_object_or_404(
-            Invoice.objects.select_related("order"),
+            Invoice.objects.select_related("order__examination"),
             pk=id
         )
 
     @staticmethod
-    def get_by_qpay_invoice_id(qpay_invoice_id: str):
-        instance = get_object_or_404(Invoice, qpay_invoice_id=qpay_invoice_id)
-        serializer = InvoiceSerializer(instance)
-        return serializer.data
+    def get_by_qpay_invoice_id(qpay_invoice_id: str | None) -> Invoice:
+        qpay_invoice_id = CommonHelper.blank_if_none(qpay_invoice_id)
+        if not qpay_invoice_id:
+            raise Http404("Invoice not found")
+        return get_object_or_404(
+            Invoice.objects.select_related("order__examination"),
+            qpay_invoice_id=qpay_invoice_id
+        )
 
     @staticmethod
-    def create(order: Order, request):
+    def create(order: Order, request) -> tuple[Invoice | None, str | None]:
         try:
             qpay_response, error = QPayService.create_invoice(order.examination.deposit_amount, order.phone)
             if error:
@@ -59,11 +66,11 @@ class InvoiceService:
             return instance, None
 
         except Exception as e:
-            logger.error(f"Failed to create invoice: {e}")
+            logger.exception(f"Failed to create invoice: {e}")
             return None, str(e)
 
     @staticmethod
-    def update(id: int, data: dict, request):
+    def update(id: int, data: dict, request) -> ReturnDict:
         instance = get_object_or_404(Invoice, pk=id)
         serializer = InvoiceSerializer(
             instance,
@@ -75,7 +82,7 @@ class InvoiceService:
         return serializer.data
 
     @staticmethod
-    def approve(id: int):
+    def approve(id: int) -> Invoice:
         instance = get_object_or_404(Invoice, pk=id)
 
         if instance.stage == InvoiceStage.PAID:
@@ -87,7 +94,7 @@ class InvoiceService:
         return instance
 
     @staticmethod
-    def cancel(id: int):
+    def cancel(id: int) -> Invoice:
         instance = get_object_or_404(Invoice, pk=id)
 
         if instance.stage == InvoiceStage.CANCELLED:
@@ -99,7 +106,7 @@ class InvoiceService:
         return instance
 
     @staticmethod
-    def delete(id: int):
+    def delete(id: int) -> None:
         instance = get_object_or_404(Invoice, pk=id)
         instance.status = Status.DELETED
         instance.updated_at = timezone.now()

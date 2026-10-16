@@ -10,7 +10,7 @@ class Invoice(BaseModel):
         choices=InvoiceStage.choices, max_length=20, default=InvoiceStage.PENDING
     )
     amount = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
-    qpay_invoice_id = models.CharField(max_length=100, null=True, blank=True)
+    qpay_invoice_id = models.CharField(max_length=100, blank=True, default="")
 
     class Meta:
         db_table = "invoice"

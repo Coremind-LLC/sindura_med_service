@@ -1,8 +1,9 @@
 from calendar import monthrange
 from datetime import date, timedelta
 
-from django.db.models import Count
+from django.db.models import Count, QuerySet
 from django.shortcuts import get_object_or_404
+from rest_framework.utils.serializer_helpers import ReturnDict, ReturnList
 
 from apps.common.enums import Status
 from apps.examination.models import Examination
@@ -12,17 +13,17 @@ from django.utils import timezone
 class ExaminationService:
 
     @staticmethod
-    def get_all():
+    def get_all() -> ReturnList:
         queryset = Examination.objects.all()
         serializer = ExaminationSerializer(queryset, many=True)
         return serializer.data
 
     @staticmethod
-    def get_by_id(id: int):
+    def get_by_id(id: int) -> Examination:
         return get_object_or_404(Examination, pk=id)
 
     @staticmethod
-    def get_locked_by_examination_pack(examination_pack_id: int):
+    def get_locked_by_examination_pack(examination_pack_id: int) -> ReturnList:
         queryset = Examination.objects.filter(
             examination_pack_id=examination_pack_id,
             is_lock=True,
@@ -32,7 +33,7 @@ class ExaminationService:
         return serializer.data
 
     @staticmethod
-    def get_by_date_and_examination_type(year: int, month: int, examination_type: int):
+    def get_by_date_and_examination_type(year: int, month: int, examination_type: int) -> QuerySet[Examination, dict]:
         today = date.today()
         start_date = date(year, month, 1)
         end_date = date(year, month, monthrange(year, month)[1])
@@ -76,7 +77,7 @@ class ExaminationService:
         ).exists()
 
     @staticmethod
-    def create(data: dict, request):
+    def create(data: dict, request) -> ReturnDict:
         serializer = ExaminationSerializer(
             data=data,
             context={"request": request}
@@ -86,7 +87,7 @@ class ExaminationService:
         return serializer.data
 
     @staticmethod
-    def create_bulk(data: list[dict], request):
+    def create_bulk(data: list[dict], request) -> ReturnList:
         serializer = ExaminationSerializer(
             data=data,
             many=True,
@@ -97,7 +98,7 @@ class ExaminationService:
         return serializer.data
 
     @staticmethod
-    def update(id: int, data: dict, request):
+    def update(id: int, data: dict, request) -> ReturnDict:
         instance = get_object_or_404(Examination, pk=id)
         serializer = ExaminationSerializer(
             instance,
@@ -109,7 +110,7 @@ class ExaminationService:
         return serializer.data
 
     @staticmethod
-    def lock(id: int):
+    def lock(id: int) -> Examination:
         instance = get_object_or_404(Examination, pk=id)
         if not instance.is_lock:
             instance.is_lock = True
@@ -118,7 +119,7 @@ class ExaminationService:
         return instance
 
     @staticmethod
-    def unlock(id: int):
+    def unlock(id: int) -> Examination:
         instance = get_object_or_404(Examination, pk=id)
         if instance.is_lock:
             instance.is_lock = False
@@ -127,14 +128,14 @@ class ExaminationService:
         return instance
 
     @staticmethod
-    def delete(id: int):
+    def delete(id: int) -> None:
         instance = get_object_or_404(Examination, pk=id)
         instance.status = Status.DELETED
         instance.updated_at = timezone.now()
         instance.save(update_fields=["status", "updated_at"])
 
     @staticmethod
-    def delete_by_examination_pack(examination_pack_id: int):
+    def delete_by_examination_pack(examination_pack_id: int) -> int:
         return Examination.objects.filter(
             examination_pack_id=examination_pack_id,
             status=Status.ACTIVE

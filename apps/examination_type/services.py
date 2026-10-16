@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class ExaminationTypeService:
 
     @staticmethod
-    def delete(id, user):
+    def delete(id, user) -> ExaminationType:
         examination_type = get_object_or_404(ExaminationType, pk=id)
 
         examination_type.status = Status.DELETED

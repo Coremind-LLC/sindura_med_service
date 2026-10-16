@@ -13,4 +13,4 @@ class ActivityLogModel(models.TextChoices):
     EXAMINATION = "EXAMINATION", "Examination"
     EXAMINATION_PACK = "EXAMINATION_PACK", "Examination pack"
     EXAMINATION_TYPE = "EXAMINATION_TYPE", "Examination type"
-    ORDER = "ORDER ", "Order"
+    ORDER = "ORDER", "Order"

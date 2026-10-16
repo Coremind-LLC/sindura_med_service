@@ -10,7 +10,11 @@ logger = logging.getLogger(__name__)
 class DoctorService:
 
     @staticmethod
-    def exists_by_email(email: str, exclude_id: int | None = None) -> bool:
+    def exists_by_email(email: str | None, exclude_id: int | None = None) -> bool:
+        # Doctors without an email are stored with "", which must never count as a duplicate.
+        if not email:
+            return False
+
         qs = Doctor.objects.filter(
             email__iexact=email,
             status=Status.ACTIVE
@@ -22,7 +26,7 @@ class DoctorService:
         return qs.exists()
 
     @staticmethod
-    def delete(id, user):
+    def delete(id, user) -> Doctor:
         doctor = get_object_or_404(Doctor, pk=id)
 
         doctor.status = Status.DELETED

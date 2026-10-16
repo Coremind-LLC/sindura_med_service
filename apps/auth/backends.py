@@ -1,9 +1,10 @@
 from django.contrib.auth.backends import ModelBackend
+from apps.user.models import User
 from apps.user.services import UserService
 
 
 class AuthBackend(ModelBackend):
-    def authenticate(self, request, username=None, password=None, **kwargs):
+    def authenticate(self, request, username=None, password=None, **kwargs) -> User | None:
         user, error = UserService.get_by_email(username)
 
         if not error and not user:

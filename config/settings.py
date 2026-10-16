@@ -13,12 +13,17 @@ PROFILE = env("PROFILE", default="local")
 
 SECRET_KEY = env("SECRET_KEY")
 
-DEBUG = True
+DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["sindura-med-api.monos.mn", "localhost", "127.0.0.1"])
+
+# Public URL of this API (QPay calls back here).
+API_HOST = env("API_HOST", default="https://sindura-med-api.monos.mn")
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+# Set to False once a reverse proxy serves /media/ itself.
+SERVE_MEDIA = env.bool("SERVE_MEDIA", default=True)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -124,6 +129,12 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
     ],
+    "DEFAULT_THROTTLE_RATES": {
+        "auth": env("AUTH_THROTTLE_RATE", default="60/minute"),
+        "order_lookup": env("ORDER_LOOKUP_THROTTLE_RATE", default="60/minute"),
+    },
+    # The API runs behind one nginx: the client IP is the last X-Forwarded-For entry.
+    "NUM_PROXIES": env.int("NUM_PROXIES", default=1),
     "COERCE_DECIMAL_TO_STRING": False,
     "DEFAULT_RENDERER_CLASSES": (
         "djangorestframework_camel_case.render.CamelCaseJSONRenderer",
@@ -149,11 +160,24 @@ SWAGGER_SETTINGS = {
 
 AUTHENTICATION_BACKENDS = ["apps.auth.backends.AuthBackend"]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# Development allows any origin; otherwise only the admin panel and the patient site.
+CORS_ALLOWED_ORIGINS = env.list(
+    "CORS_ALLOWED_ORIGINS",
+    default=["https://sindura-med-admin.monos.mn", "https://sindura-med.monos.mn"],
+)
+CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = list(default_headers)
 
 AUTH_USER_MODEL = "user.User"
+
+# HTTPS hardening. Cookies are secure outside development; redirect/HSTS are opt-in via env
+# because they depend on how TLS is terminated in front of the app.
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SESSION_COOKIE_SECURE = env.bool("SESSION_COOKIE_SECURE", default=not DEBUG)
+CSRF_COOKIE_SECURE = env.bool("CSRF_COOKIE_SECURE", default=not DEBUG)
+SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=False)
+SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=0)
 
 LOG_DIR = os.path.join(BASE_DIR, "logs")
 os.makedirs(LOG_DIR, exist_ok=True)

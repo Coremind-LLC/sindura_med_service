@@ -16,7 +16,7 @@ class User(AbstractUser):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["phone", "first_name", "last_name"]
 
-    def clean(self):
+    def clean(self) -> None:
         if not self.email and not self.phone:
             raise ValidationError({"message": "Either email or phone must be provided"})
 

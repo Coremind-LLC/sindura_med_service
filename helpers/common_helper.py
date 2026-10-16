@@ -1,4 +1,5 @@
 from datetime import datetime, date
+from typing import Any
 
 from django.db import models
 from django.forms.models import model_to_dict
@@ -20,3 +21,8 @@ class CommonHelper:
                 data[field.name] = value.isoformat()
 
         return data
+
+    @staticmethod
+    def blank_if_none(value: Any) -> Any:
+        """Map None to "" for text columns that store "" instead of NULL."""
+        return "" if value is None else value

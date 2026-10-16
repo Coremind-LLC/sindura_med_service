@@ -5,18 +5,18 @@ import re
 
 class ValidatorHelper:
     @staticmethod
-    def validate_phone(value):
+    def validate_phone(value) -> None:
         if not value.isdigit():
             raise ValidationError("Phone number must only contain digits.")
         if len(value) != 8:
             raise ValidationError("Phone number must be exactly 8 digits long.")
 
     @staticmethod
-    def is_valid_phone(value):
+    def is_valid_phone(value) -> bool:
         return value.isdigit() and len(value) == 8
 
     @staticmethod
-    def is_valid_email(value):
+    def is_valid_email(value) -> bool:
         validator = EmailValidator()
         try:
             validator(value)
@@ -25,7 +25,7 @@ class ValidatorHelper:
             return False
 
     @staticmethod
-    def is_valid_register(value):
+    def is_valid_register(value) -> bool:
         if len(value) == 7:
             return value.isdigit()
         elif len(value) == 10:

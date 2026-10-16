@@ -32,6 +32,8 @@ jobs:
           cd /var/www/sindura_med_service
           docker compose --version
           docker compose build --no-cache
+          # The image runs as the non-root user "app" (uid 1000); give it the mounted data dirs.
+          docker compose run --rm --no-deps --user root web chown -R 1000:1000 /app/media /app/static /app/logs
           docker compose up -d
 
       - name: Run Django migrations and collectstatic

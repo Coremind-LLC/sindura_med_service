@@ -1,10 +1,10 @@
-from django.contrib.auth.base_user import BaseUserManager
+from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 
 
 class UserManager(BaseUserManager):
     def create_user(
         self, email, phone, first_name, last_name, password=None, **extra_fields
-    ):
+    ) -> AbstractBaseUser:
         if not email:
             raise ValueError("Email is required")
         if not phone:
@@ -29,7 +29,7 @@ class UserManager(BaseUserManager):
 
     def create_superuser(
         self, email, phone, first_name, last_name, password=None, **extra_fields
-    ):
+    ) -> AbstractBaseUser:
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
 

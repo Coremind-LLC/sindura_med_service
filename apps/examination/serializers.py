@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from apps.common.enums import Status
+from apps.common.serializers import BlankAsNullCharField
 from apps.doctor.models import Doctor
 from apps.examination.models import Examination
 from apps.examination_type.models import ExaminationType
@@ -12,6 +13,7 @@ class ExaminationSerializer(serializers.ModelSerializer):
 
     date = serializers.DateField(required=True)
     time = serializers.TimeField(required=True)
+    room = BlankAsNullCharField(max_length=32)
     doctor = serializers.PrimaryKeyRelatedField(
         queryset=Doctor.objects.all(), required=True
     )
@@ -23,7 +25,7 @@ class ExaminationSerializer(serializers.ModelSerializer):
     doctor_first_name = serializers.CharField(source="doctor.first_name", read_only=True)
     doctor_last_name = serializers.CharField(source="doctor.last_name", read_only=True)
     doctor_position = serializers.CharField(source="doctor.position", read_only=True)
-    doctor_image = serializers.CharField(source="doctor.image", read_only=True)
+    doctor_image = BlankAsNullCharField(source="doctor.image", read_only=True)
     examination_type_name = serializers.CharField(
         source="examination_type.name", read_only=True
     )
@@ -32,7 +34,7 @@ class ExaminationSerializer(serializers.ModelSerializer):
         model = Examination
         fields = "__all__"
 
-    def validate(self, attrs):
+    def validate(self, attrs) -> dict:
         doctor = attrs.get("doctor")
         examination_type = attrs.get("examination_type")
         date = attrs.get("date")

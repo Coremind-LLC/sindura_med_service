@@ -4,6 +4,7 @@ from typing import Optional
 from apps.activity_log.enums import ActivityLogModel, ActivityLogAction
 from apps.activity_log.models import ActivityLog
 from apps.user.models import User
+from helpers.common_helper import CommonHelper
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +24,9 @@ class ActivityLogService:
             action=action,
             model=model,
             object_id=object_id,
-            description=description,
+            description=CommonHelper.blank_if_none(description),
             body=body,
             user=user,
-            user_first_name=user.first_name if user else None,
-            user_last_name=user.last_name if user else None
+            user_first_name=user.first_name if user else "",
+            user_last_name=user.last_name if user else ""
         )

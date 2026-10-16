@@ -1,3 +1,4 @@
+from django.db.models import QuerySet
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
@@ -12,7 +13,7 @@ class BaseViewSet(viewsets.ModelViewSet):
     ordering_fields = "__all__"
     ordering = ["-id"]
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         qs = super().get_queryset()
         model = self.queryset.model
 
@@ -23,7 +24,7 @@ class BaseViewSet(viewsets.ModelViewSet):
                 qs = qs.filter(archived=False)
         return qs
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer) -> None:
         serializer.validated_data.pop("status", None)
         serializer.validated_data.pop("created_at", None)
         serializer.validated_data.pop("created_by", None)
@@ -35,7 +36,7 @@ class BaseViewSet(viewsets.ModelViewSet):
             extra["created_by"] = self.request.user
         serializer.save(**extra)
 
-    def perform_update(self, serializer):
+    def perform_update(self, serializer) -> None:
         serializer.validated_data.pop("status", None)
         serializer.validated_data.pop("created_at", None)
         serializer.validated_data.pop("created_by", None)
@@ -49,7 +50,7 @@ class BaseViewSet(viewsets.ModelViewSet):
             extra["updated_at"] = timezone.now()
         serializer.save(**extra)
 
-    def perform_destroy(self, instance):
+    def perform_destroy(self, instance) -> None:
         if hasattr(instance, "updated_by"):
             instance.updated_by = self.request.user
         if hasattr(instance, "updated_at"):
