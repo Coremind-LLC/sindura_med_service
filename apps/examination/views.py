@@ -5,10 +5,13 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, BasePermission, IsAuthenticated
 from rest_framework.response import Response
 
+from apps.common.enums import Status
 from apps.common.views import BaseViewSet
 from apps.examination.models import Examination
 from apps.examination.serializers import ExaminationSerializer
 from apps.examination.services import ExaminationService
+from apps.order.enums import OrderStage
+from apps.order.models import Order
 
 class ExaminationViewSet(BaseViewSet):
     queryset = Examination.objects.all()
@@ -18,6 +21,15 @@ class ExaminationViewSet(BaseViewSet):
         if self.action in ["list", "retrieve", "get_available"]:
             return [AllowAny()]
         return [IsAuthenticated()]
+
+    def perform_destroy(self, instance: Examination) -> None:
+        """A booked slot (locked, or with a paid order) can't be deleted."""
+        if instance.is_lock:
+            raise ValidationError({"message": "Түгжээтэй үзлэгийг устгах боломжгүй"})
+        paid = Order.objects.filter(examination=instance, stage=OrderStage.PAID, status=Status.ACTIVE)
+        if paid.exists():
+            raise ValidationError({"message": "Төлбөр төлсөн захиалга байна, үзлэгийг устгах боломжгүй"})
+        super().perform_destroy(instance)
 
     @action(detail=False, methods=["get"], url_path="available")
     def get_available(self, request) -> Response:

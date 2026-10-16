@@ -106,7 +106,7 @@ class PaymentResponse:
     payment_fee: Optional[str] = None
     # Check
     trx_fee: Optional[str] = None
-
+    ebarimt_customer_no: Optional[str] = None
     payment_amount: Optional[str] = None
     payment_currency: Optional[str] = None
     payment_date: Optional[str] = None

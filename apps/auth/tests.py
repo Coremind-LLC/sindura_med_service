@@ -97,14 +97,14 @@ class AuthThrottleTests(AuthAPITestCase):
 
 class PasswordResetTests(AuthAPITestCase):
     def request_otp(self, username="99001122", status_code=200, text="ok"):
-        with mock.patch("requests.post", return_value=mock.Mock(status_code=status_code, text=text)) as post:
+        with mock.patch("requests.get", return_value=mock.Mock(status_code=status_code, text=text)) as post:
             response = self.post("forgot-password", username=username)
         return response, post
 
     def sent_otp(self):
         response, post = self.request_otp()
         self.assertEqual(response.json(), {"message": "OTP sent"})
-        payload = post.call_args.kwargs["json"]
+        payload = post.call_args.kwargs["params"]
         self.assertEqual(payload["to"], "99001122")
         return re.search(r"code: (\d{4})\.", payload["text"]).group(1)
 

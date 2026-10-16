@@ -16,16 +16,16 @@ CALL_PRO_ENV = {
 @mock.patch.dict(os.environ, CALL_PRO_ENV)
 class CallProServiceTests(SimpleTestCase):
     def send_with(self, **post_kwargs):
-        with mock.patch("requests.post", **post_kwargs) as post:
+        with mock.patch("requests.get", **post_kwargs) as post:
             result = CallProService.send(to="99112233", text="hello")
         return result, post
 
-    def test_success_posts_payload_and_returns_no_error(self):
+    def test_success_sends_query_params_and_returns_no_error(self):
         result, post = self.send_with(return_value=mock.Mock(status_code=200, text="ok"))
         self.assertEqual(result, (None, None))
         post.assert_called_once_with(
             "https://sms.example.test/send",
-            json={"key": "dummy-key", "from": "7000", "to": "99112233", "text": "hello"},
+            params={"key": "dummy-key", "from": "7000", "to": "99112233", "text": "hello"},
             timeout=30,
         )
 

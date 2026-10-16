@@ -9,6 +9,7 @@ from apps.common.enums import Status
 from apps.examination.models import Examination
 from apps.examination.serializers import ExaminationSerializer
 from django.utils import timezone
+from rest_framework.exceptions import ValidationError
 
 class ExaminationService:
 
@@ -130,6 +131,8 @@ class ExaminationService:
     @staticmethod
     def delete(id: int) -> None:
         instance = get_object_or_404(Examination, pk=id)
+        if instance.is_lock == True:
+            raise ValidationError({"message": "Түгжээтэй үзлэгийг устгах боломжгүй"})
         instance.status = Status.DELETED
         instance.updated_at = timezone.now()
         instance.save(update_fields=["status", "updated_at"])

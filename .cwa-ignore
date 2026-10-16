@@ -1,0 +1,5 @@
+# Prod container runs migrate/collectstatic on start and writes to host-mounted ./static,
+# ./media and ./logs (docker-compose.yml); WUD auto-pulls new images with no step to chown
+# those dirs, so a non-root user would crash the container. Revisit once the mounts are owned
+# by a fixed uid on the server.
+config:docker-runs-as-root   Dockerfile   # host bind mounts need root until server dirs are chowned

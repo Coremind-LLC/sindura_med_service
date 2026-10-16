@@ -81,4 +81,4 @@ venv/bin/python manage.py test --settings=config.settings_test
 
 ## Deploy
 
-`prod` branch руу push хийхэд `.github/workflows/deploy-prod.yml` сервер дээр image-ийг шинээр build хийж, `migrate`, `collectstatic` ажиллуулна. Контейнер root биш `app` (uid 1000) хэрэглэгчээр ажилладаг тул workflow нь `media/`, `static/`, `logs/` хавтсуудын эзэмшлийг тохируулна.
+`prod` branch руу push хийхэд `.github/workflows/deploy-prod.yml` image-ийг build хийж `ghcr.io/coremind-llc/sindura_med_service:prod` болгон GHCR руу push хийнэ. Сервер дээрх WUD (What's Up Docker) шинэ image-ийг татаж контейнерийг дахин асаана. Контейнер асахдаа `migrate`, `collectstatic` ажиллуулаад gunicorn-оор serve хийнэ (static файлыг whitenoise).

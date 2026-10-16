@@ -98,8 +98,7 @@ class OrderService:
     @staticmethod
     def search(value: str) -> QuerySet[Order]:
         return OrderService.get_all().filter(
-            Q(phone__icontains=value) |
-            Q(register__icontains=value)
+            Q(phone__icontains=value) | Q(register__icontains=value)
         )
 
     @staticmethod
@@ -117,9 +116,8 @@ class OrderService:
             .annotate(
                 count=Count("id"),
                 deposit_amount=Sum(
-                    "examination__deposit_amount",
-                    filter=Q(stage=OrderStage.PAID)
-                )
+                    "examination__deposit_amount", filter=Q(stage=OrderStage.PAID)
+                ),
             )
         )
 
@@ -128,7 +126,7 @@ class OrderService:
         orders = Order.objects.filter(
             stage__in=[OrderStage.CANCELLED, OrderStage.PAID],
             status=Status.ACTIVE,
-            created_at__date__range=(start_date, end_date)
+            created_at__date__range=(start_date, end_date),
         ).order_by("-id")
 
         wb = Workbook()
@@ -216,8 +214,16 @@ class OrderService:
         examination = validated["examination"]
         OrderService._move_examination(instance, examination)
 
-        update_fields = ["first_name", "last_name", "phone", "register", "reason", "is_refund", "examination",
-                         "updated_at"]
+        update_fields = [
+            "first_name",
+            "last_name",
+            "phone",
+            "register",
+            "reason",
+            "is_refund",
+            "examination",
+            "updated_at",
+        ]
 
         if user is not None:
             instance.updated_by = user
@@ -247,13 +253,17 @@ class OrderService:
 
         if not is_task:
             if instance.stage != OrderStage.CANCELLED:
-                raise serializers.ValidationError({"message": "Only cancelled orders can be approved"})
+                raise serializers.ValidationError(
+                    {"message": "Only cancelled orders can be approved"}
+                )
 
             if instance.examination is None:
                 raise serializers.ValidationError({"examination": "Order has no examination"})
 
             if instance.examination.is_lock:
-                raise serializers.ValidationError({"message": "Examination already locked"})
+                raise serializers.ValidationError(
+                    {"message": "Examination already locked"}
+                )
 
         update_fields = ["stage", "updated_at"]
         OrderTransitionService.apply_details(instance, data, user, update_fields)
@@ -263,12 +273,14 @@ class OrderService:
         instance.updated_by = user
         instance.save(update_fields=update_fields)
 
-        ActivityLogService.create(ActivityLogAction.APPROVE,
-                                  ActivityLogModel.ORDER,
-                                  instance.id,
-                                  "Order approved",
-                                  CommonHelper.serialize_model(instance),
-                                  user)
+        ActivityLogService.create(
+            ActivityLogAction.APPROVE,
+            ActivityLogModel.ORDER,
+            instance.id,
+            "Order approved",
+            CommonHelper.serialize_model(instance),
+            user,
+        )
 
         return instance
 

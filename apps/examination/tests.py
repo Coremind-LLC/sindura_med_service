@@ -6,12 +6,14 @@ from django.http import Http404
 from apps.common.enums import Status
 from apps.examination.models import Examination
 from apps.examination.services import ExaminationService
+from apps.order.enums import OrderStage
 from helpers.tests_factories import (
     AdminAPITestCase,
     make_doctor,
     make_examination,
     make_examination_pack,
     make_examination_type,
+    make_order,
 )
 
 DAY = datetime.date(2030, 1, 10)
@@ -85,6 +87,20 @@ class ExaminationAPITests(AdminAPITestCase):
         self.assertEqual(exam.status, Status.DELETED)
         listed = [row["id"] for row in self.results(self.client.get(self.url))]
         self.assertNotIn(exam.pk, listed)
+
+    def test_booked_slot_cannot_be_deleted(self):
+        locked = make_examination(is_lock=True)
+        paid = make_examination()
+        make_order(examination=paid, stage=OrderStage.PAID)
+        cases = [(locked, "Түгжээтэй үзлэгийг устгах боломжгүй"),
+                 (paid, "Төлбөр төлсөн захиалга байна, үзлэгийг устгах боломжгүй")]
+        for exam, message in cases:
+            with self.subTest(message=message):
+                response = self.client.delete(f"{self.url}{exam.pk}/")
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(response.json(), {"message": message})
+                exam.refresh_from_db()
+                self.assertEqual(exam.status, Status.ACTIVE)
 
     def test_list_filters_by_related_field(self):
         mine = make_examination(doctor=self.doctor)
