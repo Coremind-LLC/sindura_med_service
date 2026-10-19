@@ -20,7 +20,15 @@ COPY requirements.txt /app/
 RUN pip install --upgrade pip \
     && pip install -r /app/requirements.txt
 
-COPY . .
+RUN groupadd --gid 1000 app \
+    && useradd --uid 1000 --gid app --no-create-home --shell /usr/sbin/nologin app
+
+COPY --chown=app:app . .
+
+RUN mkdir -p /app/logs /app/media /app/static \
+    && chown -R app:app /app/logs /app/media /app/static
+
+USER app
 
 CMD ["sh", "-c", \
     "python manage.py migrate --noinput && \
